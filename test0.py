@@ -32,4 +32,5 @@ print(type(pi))
 width = int(input("너비 입력: "))
 height = int(input("높이 입력"))
 print("넓이:", str(width*height))
+print(f"넓이: {width*height}")
 
