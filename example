@@ -1,6 +1,0 @@
-word = "   OO OO   "
-print(word)
-
-text = word.replace(" ","")
-print(text)
-
