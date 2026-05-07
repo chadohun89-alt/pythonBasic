@@ -1,0 +1,905 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Matplotlib 복습 노트 — 2026-05-07</title>
+  <style>
+    :root {
+      --bg: #f5f7fb;
+      --surface: #ffffff;
+      --surface2: #eef1f8;
+      --border: #d8dde8;
+      --accent: #3b6ef0;
+      --accent2: #2a9e6e;
+      --accent3: #e07b20;
+      --accent4: #9b4ec8;
+      --text: #1e2030;
+      --muted: #6070a0;
+      --code-bg: #f0f2f8;
+      --red: #d04040;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Segoe UI', 'Malgun Gothic', sans-serif;
+      font-size: 15px;
+      line-height: 1.75;
+    }
+
+    /* ── 헤더 ── */
+    header {
+      background: linear-gradient(135deg, #dce6ff 0%, #f5f7fb 100%);
+      border-bottom: 1px solid var(--border);
+      padding: 48px 40px 36px;
+      text-align: center;
+    }
+    header .badge {
+      display: inline-block;
+      background: var(--accent);
+      color: #fff;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      padding: 3px 12px;
+      border-radius: 20px;
+      margin-bottom: 14px;
+    }
+    header h1 {
+      font-size: 2rem;
+      font-weight: 700;
+      color: #1e2030;
+      margin-bottom: 8px;
+    }
+    header p {
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    /* ── 레이아웃 ── */
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 48px 24px 80px;
+    }
+
+    /* ── 목차 ── */
+    .toc {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px 28px;
+      margin-bottom: 48px;
+    }
+    .toc h2 {
+      font-size: 13px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--muted);
+      margin-bottom: 14px;
+    }
+    .toc ol {
+      padding-left: 20px;
+    }
+    .toc li {
+      margin-bottom: 6px;
+    }
+    .toc a {
+      color: var(--accent);
+      text-decoration: none;
+      font-size: 14px;
+    }
+    .toc a:hover { text-decoration: underline; }
+
+    /* ── 섹션 ── */
+    .section {
+      margin-bottom: 60px;
+    }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 24px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--border);
+    }
+    .section-num {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: var(--accent);
+      color: #fff;
+      font-weight: 700;
+      font-size: 15px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .section-num.green  { background: var(--accent2); }
+    .section-num.orange { background: var(--accent3); }
+    .section-num.purple { background: var(--accent4); }
+    .section-num.red    { background: var(--red); }
+
+    .section-title {
+      flex: 1;
+    }
+    .section-title h2 {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: #1e2030;
+    }
+    .section-title .filename {
+      font-size: 12px;
+      color: var(--muted);
+      font-family: 'Consolas', monospace;
+    }
+
+    /* ── 개념 카드 ── */
+    .concept-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 14px;
+      margin-bottom: 24px;
+    }
+    .concept-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px 18px;
+    }
+    .concept-card .icon {
+      font-size: 20px;
+      margin-bottom: 8px;
+    }
+    .concept-card h3 {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--accent);
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .concept-card p {
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    /* ── 설명 블록 ── */
+    .explain {
+      background: var(--surface);
+      border-left: 3px solid var(--accent);
+      border-radius: 0 8px 8px 0;
+      padding: 16px 20px;
+      margin-bottom: 20px;
+      font-size: 14px;
+      color: var(--text);
+    }
+    .explain.green  { border-color: var(--accent2); }
+    .explain.orange { border-color: var(--accent3); }
+    .explain.purple { border-color: var(--accent4); }
+    .explain.red    { border-color: var(--red); }
+
+    .explain strong { color: #fff; }
+    .explain code {
+      background: var(--code-bg);
+      padding: 1px 6px;
+      border-radius: 4px;
+      font-family: 'Consolas', monospace;
+      font-size: 13px;
+      color: var(--accent2);
+    }
+
+    /* ── 코드 블록 ── */
+    .code-block {
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+      margin-bottom: 24px;
+    }
+    .code-header {
+      background: var(--surface2);
+      padding: 8px 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .code-header .dot {
+      width: 10px; height: 10px;
+      border-radius: 50%;
+    }
+    .code-header .dot:nth-child(1) { background: #ff5f57; }
+    .code-header .dot:nth-child(2) { background: #ffbd2e; }
+    .code-header .dot:nth-child(3) { background: #28ca41; }
+    .code-header .label {
+      margin-left: 6px;
+      font-size: 12px;
+      color: var(--muted);
+      font-family: 'Consolas', monospace;
+    }
+    pre {
+      padding: 20px 24px;
+      overflow-x: auto;
+      font-family: 'Consolas', 'D2Coding', monospace;
+      font-size: 13px;
+      line-height: 1.7;
+    }
+
+    /* ── 파이썬 문법 색상 ── */
+    .kw   { color: #7c3aed; }   /* keyword */
+    .fn   { color: #1d5fc8; }   /* function */
+    .str  { color: #2a7a3b; }   /* string */
+    .num  { color: #c0440a; }   /* number */
+    .cm   { color: #7a8aaa; font-style: italic; } /* comment */
+    .cls  { color: #a06010; }   /* class/module */
+    .op   { color: #0b7fa0; }   /* operator */
+
+    /* ── 원리 박스 ── */
+    .principle {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 20px 24px;
+      margin-bottom: 20px;
+    }
+    .principle h3 {
+      font-size: 14px;
+      font-weight: 700;
+      color: #1e2030;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .principle ul {
+      padding-left: 20px;
+    }
+    .principle li {
+      font-size: 13.5px;
+      color: var(--muted);
+      margin-bottom: 5px;
+    }
+    .principle li strong { color: var(--text); }
+    .principle code {
+      background: var(--code-bg);
+      padding: 1px 6px;
+      border-radius: 4px;
+      font-family: 'Consolas', monospace;
+      font-size: 12px;
+      color: var(--accent2);
+    }
+
+    /* ── 흐름도 ── */
+    .flow {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      flex-wrap: wrap;
+      margin-bottom: 24px;
+    }
+    .flow-step {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 16px;
+      font-size: 13px;
+      text-align: center;
+      min-width: 120px;
+    }
+    .flow-step .step-num {
+      font-size: 10px;
+      color: var(--muted);
+      margin-bottom: 3px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+    }
+    .flow-arrow {
+      color: var(--muted);
+      font-size: 18px;
+      padding: 0 6px;
+    }
+
+    /* ── 구분선 ── */
+    hr {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 48px 0;
+    }
+
+    /* ── 요약 카드 ── */
+    .summary {
+      background: linear-gradient(135deg, #dce6ff 0%, #f0f4ff 100%);
+      border: 1px solid var(--accent);
+      border-radius: 12px;
+      padding: 28px 32px;
+    }
+    .summary h2 {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #1e2030;
+      margin-bottom: 16px;
+    }
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 10px;
+    }
+    .summary-item {
+      background: var(--surface2);
+      border-radius: 8px;
+      padding: 12px 14px;
+      font-size: 13px;
+    }
+    .summary-item .tag {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 4px;
+    }
+
+    footer {
+      text-align: center;
+      padding: 32px;
+      color: var(--muted);
+      font-size: 12px;
+      border-top: 1px solid var(--border);
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="badge">복습 노트</div>
+  <h1>Matplotlib 시각화</h1>
+  <p>2026-05-07 &nbsp;|&nbsp; 오늘 수업 코드 기반 정리</p>
+</header>
+
+<div class="container">
+
+  <!-- 목차 -->
+  <nav class="toc">
+    <h2>목차</h2>
+    <ol>
+      <li><a href="#s1">기본 그래프 그리기 — plot, 저장, 한글 폰트</a></li>
+      <li><a href="#s2">이미지 처리 & subplot — numpy 배열 이미지화</a></li>
+      <li><a href="#s3">JSON 데이터 + 바운딩 박스 — 객체 탐지 시각화</a></li>
+      <li><a href="#s4">막대 그래프 & 히스토그램 — 데이터 집계 시각화</a></li>
+      <li><a href="#s5">실습 문제 — 크기 기준 객체 필터링</a></li>
+      <li><a href="#s6">오늘의 핵심 요약</a></li>
+    </ol>
+  </nav>
+
+
+  <!-- ① 기본 그래프 -->
+  <section class="section" id="s1">
+    <div class="section-header">
+      <div class="section-num">1</div>
+      <div class="section-title">
+        <h2>기본 그래프 그리기</h2>
+        <span class="filename">matplotlib_study1.py</span>
+      </div>
+    </div>
+
+    <div class="concept-grid">
+      <div class="concept-card">
+        <div class="icon">🖋️</div>
+        <h3>한글 폰트 설정</h3>
+        <p>matplotlib 기본 폰트는 한글을 지원하지 않아 <strong>깨짐</strong>이 발생한다. 사용 전 전역 설정이 필요하다.</p>
+      </div>
+      <div class="concept-card">
+        <div class="icon">📐</div>
+        <h3>여백 & 레이아웃</h3>
+        <p>x축 라벨이 길면 겹친다. <strong>rotation</strong>으로 회전, <strong>tight_layout</strong>으로 자동 여백 조정.</p>
+      </div>
+      <div class="concept-card">
+        <div class="icon">💾</div>
+        <h3>그래프 저장</h3>
+        <p><strong>dpi</strong> 값으로 해상도를 결정한다. 72 저화질 / 150 중간 / 300 고화질.</p>
+      </div>
+    </div>
+
+    <div class="explain">
+      <strong>plt.rcParams</strong> — matplotlib 전역 설정 딕셔너리.<br>
+      <code>'font.family'</code>를 <code>'Malgun Gothic'</code>으로 설정하면 한글이 정상 출력된다.<br>
+      <code>'axes.unicode_minus'</code>를 <code>False</code>로 설정하면 음수 기호(<code>−</code>)가 깨지지 않는다.
+    </div>
+
+    <div class="code-block">
+      <div class="code-header">
+        <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+        <span class="label">matplotlib_study1.py</span>
+      </div>
+      <pre><span class="kw">import</span> numpy <span class="kw">as</span> np
+<span class="kw">import</span> matplotlib.pyplot <span class="kw">as</span> plt
+
+<span class="cm"># ① 한글 폰트 설정 — 반드시 plot보다 먼저 설정</span>
+plt.rcParams[<span class="str">'font.family'</span>] = <span class="str">'Malgun Gothic'</span>
+plt.rcParams[<span class="str">'axes.unicode_minus'</span>] = <span class="kw">False</span>
+
+x = [<span class="str">"자바"</span>, <span class="str">"스프링부트"</span>, <span class="str">"html"</span>, <span class="str">"데이터베이스"</span>,
+     <span class="str">"파이썬"</span>, <span class="str">"css"</span>, <span class="str">"javascript"</span>, <span class="str">"진섭이는 게임을 못한다."</span>]
+y = [<span class="num">45</span>, <span class="num">56</span>, <span class="num">78</span>, <span class="num">91</span>, <span class="num">68</span>, <span class="num">77</span>, <span class="num">89</span>, <span class="num">10</span>]
+
+plt.<span class="fn">plot</span>(x, y)
+
+<span class="cm"># ② x축 라벨 45도 회전 (길면 겹침 방지)</span>
+plt.<span class="fn">xticks</span>(rotation=<span class="num">45</span>)
+
+<span class="cm"># ③ 여백 자동 설정 (라벨 잘림 방지)</span>
+plt.<span class="fn">tight_layout</span>()
+
+<span class="cm"># ④ 파일 저장 — dpi=300 고화질, transparent=True 배경 투명</span>
+plt.<span class="fn">savefig</span>(<span class="str">"test2.png"</span>, dpi=<span class="num">300</span>, transparent=<span class="kw">True</span>)
+
+plt.<span class="fn">show</span>()</pre>
+    </div>
+
+    <div class="principle">
+      <h3>💡 핵심 원리</h3>
+      <ul>
+        <li><strong>plt.plot(x, y)</strong> — x, y 리스트를 받아 점들을 선으로 연결한 그래프를 그린다.</li>
+        <li><strong>savefig vs show</strong> — <code>savefig()</code>는 파일 저장, <code>show()</code>는 화면 출력. 순서가 중요하다. show() 이후엔 그래프가 초기화되므로 <strong>savefig를 먼저</strong> 호출해야 한다.</li>
+        <li><strong>dpi (dots per inch)</strong> — 인치당 픽셀 수. 값이 클수록 선명하지만 파일 크기도 커진다.</li>
+      </ul>
+    </div>
+  </section>
+
+
+  <!-- ② 이미지 처리 -->
+  <section class="section" id="s2">
+    <div class="section-header">
+      <div class="section-num green">2</div>
+      <div class="section-title">
+        <h2>이미지 처리 & subplot</h2>
+        <span class="filename">matplotlib_study2.py</span>
+      </div>
+    </div>
+
+    <div class="concept-grid">
+      <div class="concept-card">
+        <div class="icon">🖼️</div>
+        <h3>numpy 배열 = 이미지</h3>
+        <p>이미지는 결국 숫자 배열이다. 픽셀 값 <strong>0 = 검정</strong>, <strong>255 = 흰색</strong>.</p>
+      </div>
+      <div class="concept-card">
+        <div class="icon">⚫</div>
+        <h3>이진화 (Binarization)</h3>
+        <p>픽셀을 0 또는 255 두 값으로만 나누는 처리. 경계선 감지 등에 쓰인다.</p>
+      </div>
+      <div class="concept-card">
+        <div class="icon">📊</div>
+        <h3>subplot</h3>
+        <p>하나의 창에 여러 그래프를 배치. <strong>(행, 열, 위치)</strong> 로 지정한다.</p>
+      </div>
+    </div>
+
+    <div class="explain green">
+      <strong>이진화 원리</strong> — 128을 기준(threshold)으로 밝은 픽셀은 255(흰색), 어두운 픽셀은 0(검정)으로 강제 변환한다.<br>
+      numpy의 <strong>조건 인덱싱</strong>을 사용하면 반복문 없이 배열 전체에 한번에 적용할 수 있다.
+    </div>
+
+    <div class="code-block">
+      <div class="code-header">
+        <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+        <span class="label">matplotlib_study2.py</span>
+      </div>
+      <pre><span class="kw">import</span> numpy <span class="kw">as</span> np
+<span class="kw">import</span> matplotlib.pyplot <span class="kw">as</span> plt
+
+<span class="cm"># 100×100 랜덤 픽셀 이미지 생성 (0~255 정수)</span>
+img = np.<span class="fn">random.randint</span>(<span class="num">0</span>, <span class="num">256</span>, (<span class="num">100</span>, <span class="num">100</span>))
+
+<span class="cm"># 원본을 건드리지 않기 위해 복사본 생성</span>
+copy_img = np.<span class="fn">copy</span>(img)
+
+<span class="cm"># ★ 이진화 — 128 이상은 255(흰색), 미만은 0(검정)으로 강제 변환</span>
+copy_img[copy_img >= <span class="num">128</span>] = <span class="num">255</span>
+copy_img[copy_img < <span class="num">128</span>]  = <span class="num">0</span>
+
+<span class="cm"># subplot(행, 열, 위치) — 1행 2열 레이아웃 준비</span>
+plt.<span class="fn">figure</span>(figsize=(<span class="num">8</span>, <span class="num">4</span>))
+
+plt.<span class="fn">subplot</span>(<span class="num">1</span>, <span class="num">2</span>, <span class="num">1</span>)          <span class="cm"># 1행 2열의 1번째 칸</span>
+plt.<span class="fn">imshow</span>(copy_img, cmap=<span class="str">'gray'</span>)
+plt.<span class="fn">title</span>(<span class="str">"copy"</span>)
+plt.<span class="fn">axis</span>(<span class="str">'off'</span>)              <span class="cm"># 축 눈금 숨기기</span>
+
+plt.<span class="fn">subplot</span>(<span class="num">1</span>, <span class="num">2</span>, <span class="num">2</span>)          <span class="cm"># 1행 2열의 2번째 칸</span>
+plt.<span class="fn">imshow</span>(copy_img, cmap=<span class="str">'gray'</span>)
+plt.<span class="fn">title</span>(<span class="str">"original"</span>)
+plt.<span class="fn">axis</span>(<span class="str">'off'</span>)
+
+plt.<span class="fn">show</span>()</pre>
+    </div>
+
+    <div class="principle">
+      <h3>💡 핵심 원리</h3>
+      <ul>
+        <li><strong>np.copy()</strong> — 배열을 복사한다. 그냥 <code>=</code>로 대입하면 같은 객체를 가리켜 원본도 바뀐다 (얕은 복사 주의).</li>
+        <li><strong>조건 인덱싱</strong> — <code>arr[arr &gt;= 128] = 255</code> 처럼 조건을 만족하는 원소만 골라 한번에 값을 바꿀 수 있다. 반복문보다 훨씬 빠르다.</li>
+        <li><strong>cmap='gray'</strong> — 2D 배열을 그레이스케일로 표시. 없으면 기본 컬러맵(viridis)으로 색이 입혀진다.</li>
+        <li><strong>plt.subplot(행, 열, 위치)</strong> — subplot 호출 이후의 plot 명령이 해당 칸에 그려진다.</li>
+      </ul>
+    </div>
+  </section>
+
+
+  <!-- ③ JSON + 바운딩 박스 -->
+  <section class="section" id="s3">
+    <div class="section-header">
+      <div class="section-num orange">3</div>
+      <div class="section-title">
+        <h2>JSON 데이터 + 바운딩 박스</h2>
+        <span class="filename">matplotlib_study3.py</span>
+      </div>
+    </div>
+
+    <div class="concept-grid">
+      <div class="concept-card">
+        <div class="icon">📄</div>
+        <h3>JSON 파싱</h3>
+        <p>어노테이션 데이터는 JSON 형태로 제공된다. <code>json.load()</code>로 딕셔너리로 변환.</p>
+      </div>
+      <div class="concept-card">
+        <div class="icon">📦</div>
+        <h3>바운딩 박스</h3>
+        <p>객체 탐지에서 객체의 위치를 표시하는 사각형. <strong>x, y, width, height</strong> 4개 값으로 정의.</p>
+      </div>
+      <div class="concept-card">
+        <div class="icon">🏷️</div>
+        <h3>텍스트 레이블</h3>
+        <p>박스 위에 <code>plt.text()</code>로 클래스명 등을 표시한다.</p>
+      </div>
+    </div>
+
+    <div class="explain orange">
+      <strong>객체 탐지 시각화 흐름</strong><br>
+      이미지 파일 + JSON 어노테이션 파일을 같이 사용한다.<br>
+      JSON에는 각 객체의 <strong>카테고리 코드</strong>와 <strong>위치 좌표</strong>가 담겨 있고,
+      <code>patches.Rectangle</code>로 해당 위치에 사각형을 그린다.
+    </div>
+
+    <div class="flow">
+      <div class="flow-step">
+        <div class="step-num">STEP 1</div>
+        JSON 읽기<br><small>json.load()</small>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step">
+        <div class="step-num">STEP 2</div>
+        카테고리 필터<br><small>if code == 'vehicle'</small>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step">
+        <div class="step-num">STEP 3</div>
+        좌표 추출<br><small>x, y, w, h</small>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step">
+        <div class="step-num">STEP 4</div>
+        박스 생성<br><small>patches.Rectangle</small>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step">
+        <div class="step-num">STEP 5</div>
+        이미지에 추가<br><small>ax.add_patch()</small>
+      </div>
+    </div>
+
+    <div class="code-block">
+      <div class="code-header">
+        <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+        <span class="label">matplotlib_study3.py</span>
+      </div>
+      <pre><span class="kw">import</span> matplotlib.pyplot <span class="kw">as</span> plt
+<span class="kw">import</span> matplotlib.patches <span class="kw">as</span> patches
+<span class="kw">import</span> json
+
+<span class="cm"># JSON 파일 읽기</span>
+<span class="kw">with</span> <span class="fn">open</span>(<span class="str">'18396603_frame_20.json'</span>, <span class="str">'r'</span>, encoding=<span class="str">'utf-8'</span>) <span class="kw">as</span> f:
+    data = json.<span class="fn">load</span>(f)
+
+annotations = data[<span class="str">'frames'</span>][<span class="str">'annotations'</span>]
+
+colors = (<span class="str">'red'</span>, <span class="str">'green'</span>, <span class="str">'blue'</span>, <span class="str">'yellow'</span>, <span class="str">'lime'</span>,
+          <span class="str">'magenta'</span>, <span class="str">'cyan'</span>, <span class="str">'purple'</span>)
+
+<span class="cm"># vehicle 카테고리만 좌표 수집</span>
+pos = <span class="fn">list</span>()
+idx = <span class="num">0</span>
+<span class="kw">for</span> ann <span class="kw">in</span> annotations:
+    <span class="kw">if</span> ann[<span class="str">'category'</span>][<span class="str">'code'</span>] != <span class="str">'vehicle'</span>:
+        <span class="kw">continue</span>
+    label = ann[<span class="str">'label'</span>]
+    pos.<span class="fn">append</span>((label[<span class="str">'x'</span>], label[<span class="str">'y'</span>],
+                label[<span class="str">'width'</span>], label[<span class="str">'height'</span>],
+                colors[idx]))
+    idx += <span class="num">1</span>
+
+<span class="cm"># 이미지 출력</span>
+img = plt.<span class="fn">imread</span>(<span class="str">"18396603_frame_20.png"</span>)
+plt.<span class="fn">imshow</span>(img)
+
+<span class="cm"># ax = 현재 그래프 축 객체 (박스를 붙일 대상)</span>
+ax = plt.<span class="fn">gca</span>()
+
+<span class="kw">for</span> (x, y, w, h, color) <span class="kw">in</span> pos:
+    <span class="cm"># 사각형 박스 객체 생성</span>
+    box = patches.<span class="cls">Rectangle</span>(
+        (x, y),        <span class="cm"># 좌상단 시작 좌표</span>
+        w, h,          <span class="cm"># 너비, 높이</span>
+        fill=<span class="kw">False</span>,    <span class="cm"># 내부 색 없음</span>
+        edgecolor=color,
+        linewidth=<span class="num">2</span>
+    )
+    ax.<span class="fn">add_patch</span>(box)  <span class="cm"># 이미지에 박스 추가</span>
+
+    <span class="cm"># 박스 위에 텍스트 표시</span>
+    plt.<span class="fn">text</span>(x, y - <span class="num">10</span>, <span class="str">'object'</span>, color=<span class="str">'red'</span>,
+             fontsize=<span class="num">10</span>,
+             bbox=<span class="fn">dict</span>(facecolor=<span class="str">'white'</span>, edgecolor=<span class="str">'red'</span>, pad=<span class="num">2</span>))
+
+plt.<span class="fn">show</span>()</pre>
+    </div>
+
+    <div class="principle">
+      <h3>💡 핵심 원리</h3>
+      <ul>
+        <li><strong>plt.gca()</strong> — get current axes. 현재 활성화된 그래프 축 객체를 반환한다. 박스나 도형을 이미지 위에 올리려면 이 축 객체가 필요하다.</li>
+        <li><strong>patches.Rectangle((x,y), w, h)</strong> — (x,y)는 사각형의 <strong>왼쪽 위 모서리</strong> 좌표, 이미지 좌표계는 <strong>왼쪽 위가 원점(0,0)</strong>이다.</li>
+        <li><strong>ax.add_patch(box)</strong> — 생성한 도형 객체를 실제 그래프에 등록해야 화면에 나타난다.</li>
+        <li><strong>plt.text(x, y-10, ...)</strong> — y-10을 하는 이유: 박스의 위쪽 바깥에 텍스트를 배치하기 위해서 (y값이 작을수록 이미지 위쪽).</li>
+      </ul>
+    </div>
+  </section>
+
+
+  <!-- ④ 막대 그래프 & 히스토그램 -->
+  <section class="section" id="s4">
+    <div class="section-header">
+      <div class="section-num purple">4</div>
+      <div class="section-title">
+        <h2>막대 그래프 & 히스토그램</h2>
+        <span class="filename">matplotlib_study4.py</span>
+      </div>
+    </div>
+
+    <div class="concept-grid">
+      <div class="concept-card">
+        <div class="icon">📊</div>
+        <h3>막대 그래프 (bar)</h3>
+        <p>카테고리별 수량을 비교할 때 사용. JSON을 집계해서 바로 시각화 가능.</p>
+      </div>
+      <div class="concept-card">
+        <div class="icon">📈</div>
+        <h3>히스토그램 (hist)</h3>
+        <p>연속적인 수치 데이터의 <strong>분포</strong>를 확인. 이미지 픽셀 밝기 분포 분석에 사용.</p>
+      </div>
+      <div class="concept-card">
+        <div class="icon">🔢</div>
+        <h3>ravel()</h3>
+        <p>2D 이미지 배열을 1D로 펼침. 히스토그램은 1D 배열을 입력으로 받기 때문에 필요.</p>
+      </div>
+    </div>
+
+    <div class="code-block">
+      <div class="code-header">
+        <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+        <span class="label">matplotlib_study4.py — 막대 그래프</span>
+      </div>
+      <pre><span class="kw">import</span> matplotlib.pyplot <span class="kw">as</span> plt
+<span class="kw">import</span> json
+
+<span class="kw">with</span> <span class="fn">open</span>(<span class="str">"18396603_frame_20.json"</span>, <span class="str">"r"</span>, encoding=<span class="str">"utf-8"</span>) <span class="kw">as</span> f:
+    data = json.<span class="fn">load</span>(f)
+
+<span class="cm"># car, truck, person 객체 수 집계</span>
+counts = {<span class="str">'car'</span>: <span class="num">0</span>, <span class="str">'truck'</span>: <span class="num">0</span>, <span class="str">'person'</span>: <span class="num">0</span>}
+
+<span class="kw">for</span> ann <span class="kw">in</span> data[<span class="str">'frames'</span>][<span class="str">'annotations'</span>]:
+    code = ann[<span class="str">'category'</span>][<span class="str">'code'</span>]
+    <span class="kw">if</span> code == <span class="str">'vehicle'</span>:
+        <span class="cm"># vehicle 코드 안에 car/truck 구분이 attributes에 있음</span>
+        value = ann[<span class="str">'category'</span>][<span class="str">'attributes'</span>][<span class="num">0</span>][<span class="str">'value'</span>]
+        counts[value] += <span class="num">1</span>
+    <span class="kw">elif</span> code == <span class="str">'person'</span>:
+        counts[<span class="str">'person'</span>] += <span class="num">1</span>
+
+label  = <span class="fn">list</span>(counts.keys())    <span class="cm"># ['car', 'truck', 'person']</span>
+values = <span class="fn">list</span>(counts.values())  <span class="cm"># [갯수, 갯수, 갯수]</span>
+
+plt.<span class="fn">bar</span>(label, values, color=[<span class="str">'blue'</span>, <span class="str">'red'</span>, <span class="str">'green'</span>])
+plt.<span class="fn">ylim</span>(<span class="num">0</span>, <span class="fn">max</span>(values) + <span class="num">1</span>)  <span class="cm"># y축 최대값을 데이터+1로 설정</span>
+plt.<span class="fn">show</span>()</pre>
+    </div>
+
+    <div class="code-block">
+      <div class="code-header">
+        <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+        <span class="label">matplotlib_study4.py — 히스토그램 (주석 처리된 내용)</span>
+      </div>
+      <pre><span class="kw">from</span> PIL <span class="kw">import</span> Image
+<span class="kw">import</span> numpy <span class="kw">as</span> np
+
+img  = <span class="cls">Image</span>.<span class="fn">open</span>(<span class="str">"18396603_frame_20.png"</span>)
+gray = img.<span class="fn">convert</span>(<span class="str">'L'</span>)      <span class="cm"># RGB → 그레이스케일 변환</span>
+
+gray_arr = np.<span class="fn">array</span>(gray)    <span class="cm"># PIL 이미지 → numpy 배열</span>
+
+plt.<span class="fn">figure</span>(figsize=(<span class="num">10</span>, <span class="num">4</span>))
+
+<span class="cm"># ravel() : 2D 배열(100×100) → 1D 배열(10000,)로 펼치기</span>
+<span class="cm"># bins=256 : 0~255 범위를 256칸으로 나눠 세밀한 분포 확인</span>
+plt.<span class="fn">hist</span>(gray_arr.<span class="fn">ravel</span>(), bins=<span class="num">256</span>, color=<span class="str">'gray'</span>)
+
+plt.<span class="fn">title</span>(<span class="str">'Histogram'</span>)
+plt.<span class="fn">xlim</span>([<span class="num">0</span>, <span class="num">256</span>])
+plt.<span class="fn">show</span>()</pre>
+    </div>
+
+    <div class="principle">
+      <h3>💡 핵심 원리</h3>
+      <ul>
+        <li><strong>딕셔너리 집계 패턴</strong> — <code>counts = {'car': 0, ...}</code> 으로 초기화 후 반복문에서 <code>counts[key] += 1</code>. 데이터를 집계할 때 매우 자주 쓰이는 패턴이다.</li>
+        <li><strong>히스토그램 vs 막대 그래프</strong> — 막대 그래프는 <strong>카테고리</strong> 비교, 히스토그램은 <strong>연속 수치의 분포</strong>를 확인한다. 이미지 픽셀 분석엔 히스토그램이 적합하다.</li>
+        <li><strong>img.convert('L')</strong> — Pillow에서 'L' 모드는 Luminance(밝기). RGB 3채널을 1채널 그레이스케일로 변환한다.</li>
+        <li><strong>ravel()</strong> — 다차원 배열을 1차원으로 <strong>펼치는</strong> 함수. <code>flatten()</code>과 비슷하지만 가능하면 복사 없이 view를 반환해 더 빠르다.</li>
+      </ul>
+    </div>
+  </section>
+
+
+  <!-- ⑤ 실습 문제 -->
+  <section class="section" id="s5">
+    <div class="section-header">
+      <div class="section-num red">5</div>
+      <div class="section-title">
+        <h2>실습 문제 — 크기 기준 객체 필터링</h2>
+        <span class="filename">matplotlib_test.py</span>
+      </div>
+    </div>
+
+    <div class="explain red">
+      <strong>문제</strong> — 125번 이미지에서 차량 중 <strong>가장 큰 차</strong>는 빨간 박스, <strong>세 번째로 큰 차</strong>는 노란 박스로 표시하라.<br>
+      핵심 포인트: <strong>면적 = width × height</strong>로 크기를 정의하고, 가장 큰 3개를 어떻게 추출할 것인가?
+    </div>
+
+    <div class="principle">
+      <h3>🤔 풀이 전략 — 어떻게 1위, 3위를 뽑을까?</h3>
+      <ul>
+        <li>변수 3개(<code>max</code>, <code>max2</code>, <code>max3</code>)를 두고 <strong>한 번의 순회</strong>로 상위 3개 면적 값을 추출한다.</li>
+        <li>두 번째 순회에서 면적이 1위 또는 3위인 객체를 리스트에 수집한다.</li>
+        <li>수집된 리스트에서 각각 좌표를 꺼내 박스를 그린다.</li>
+      </ul>
+    </div>
+
+    <div class="code-block">
+      <div class="code-header">
+        <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+        <span class="label">matplotlib_test.py</span>
+      </div>
+      <pre><span class="kw">import</span> matplotlib.pyplot <span class="kw">as</span> plt
+<span class="kw">import</span> matplotlib.patches <span class="kw">as</span> patches
+<span class="kw">import</span> json
+
+img = plt.<span class="fn">imread</span>(<span class="str">'18396708_frame_125.png'</span>)
+
+<span class="kw">with</span> <span class="fn">open</span>(<span class="str">"18396708_frame_125.json"</span>, <span class="str">'r'</span>, encoding=<span class="str">'utf-8'</span>) <span class="kw">as</span> f:
+    data = json.<span class="fn">load</span>(f)
+
+plt.<span class="fn">imshow</span>(img)
+ax = plt.<span class="fn">gca</span>()
+
+<span class="cm"># ① 1순위, 2순위, 3순위 면적 값 추출</span>
+max = <span class="num">0</span>;  max2 = <span class="num">0</span>;  max3 = <span class="num">0</span>
+
+<span class="kw">for</span> ann <span class="kw">in</span> data[<span class="str">'frames'</span>][<span class="str">'annotations'</span>]:
+    area = ann[<span class="str">'label'</span>][<span class="str">'width'</span>] * ann[<span class="str">'label'</span>][<span class="str">'height'</span>]
+    <span class="kw">if</span> area > max:
+        max = area
+    <span class="kw">elif</span> max > area > max2:
+        max2 = area
+    <span class="kw">elif</span> max2 > area > max3:
+        max3 = area
+
+<span class="cm"># ② 1위 또는 3위 면적을 가진 객체 수집</span>
+max_find = <span class="fn">list</span>()
+<span class="kw">for</span> ann <span class="kw">in</span> data[<span class="str">'frames'</span>][<span class="str">'annotations'</span>]:
+    area = ann[<span class="str">'label'</span>][<span class="str">'width'</span>] * ann[<span class="str">'label'</span>][<span class="str">'height'</span>]
+    <span class="kw">if</span> area == max <span class="kw">or</span> area == max3:
+        max_find.<span class="fn">append</span>(ann)
+
+<span class="cm"># ③ 박스 그리기</span>
+<span class="kw">for</span> i, ann <span class="kw">in</span> <span class="fn">enumerate</span>(max_find):
+    lbl   = ann[<span class="str">'label'</span>]
+    color = <span class="str">'red'</span> <span class="kw">if</span> i == <span class="num">0</span> <span class="kw">else</span> <span class="str">'yellow'</span>
+    box   = patches.<span class="cls">Rectangle</span>(
+        (lbl[<span class="str">'x'</span>], lbl[<span class="str">'y'</span>]),
+        lbl[<span class="str">'width'</span>], lbl[<span class="str">'height'</span>],
+        fill=<span class="kw">False</span>, edgecolor=color, linewidth=<span class="num">3</span>
+    )
+    ax.<span class="fn">add_patch</span>(box)
+
+plt.<span class="fn">show</span>()</pre>
+    </div>
+
+    <div class="principle">
+      <h3>💡 핵심 원리</h3>
+      <ul>
+        <li><strong>면적 기준 정렬 vs 순회</strong> — <code>sorted()</code>를 쓰면 더 간결하게 풀 수 있다. <code>sorted(annotations, key=lambda a: a['label']['width'] * a['label']['height'], reverse=True)</code> 로 정렬 후 [0], [2] 인덱스를 쓰면 된다.</li>
+        <li><strong>elif 순서가 중요</strong> — 면적이 max보다 크면 max를 갱신해야 하므로 큰 값부터 체크해야 한다. 순서가 바뀌면 1위·2위 판단이 틀린다.</li>
+        <li><strong>== 비교의 위험</strong> — 면적 값이 같은 객체가 여럿일 경우 오동작할 수 있다. 실무에선 정렬 후 인덱스 접근이 더 안전하다.</li>
+      </ul>
+    </div>
+  </section>
+
+
+  <hr />
+
+  <!-- 요약 -->
+  <section class="section" id="s6">
+    <div class="section-header">
+      <div class="section-num">✦</div>
+      <div class="section-title">
+        <h2>오늘의 핵심 요약</h2>
+        <span class="filename">5개 파일 전체</span>
+      </div>
+    </div>
+
+    <div class="summary">
+      <h2>오늘 배운 것 한눈에 보기</h2>
+      <div class="summary-grid">
+        <div class="summary-item">
+          <div class="tag">그래프 기본</div>
+          plt.plot / xticks / tight_layout / savefig / rcParams 한글 설정
+        </div>
+        <div class="summary-item">
+          <div class="tag">이미지 처리</div>
+          numpy 배열 = 이미지 / 이진화 / np.copy / cmap='gray'
+        </div>
+        <div class="summary-item">
+          <div class="tag">subplot</div>
+          plt.subplot(행, 열, 위치) / 한 창에 여러 그래프 배치
+        </div>
+        <div class="summary-item">
+          <div class="tag">바운딩 박스</div>
+          patches.Rectangle / ax.add_patch / plt.gca() / plt.text()
+        </div>
+        <div class="summary-item">
+          <div class="tag">데이터 집계</div>
+          JSON → 딕셔너리 집계 → plt.bar() 막대 그래프
+        </div>
+        <div class="summary-item">
+          <div class="tag">픽셀 분포</div>
+          img.convert('L') / ravel() / plt.hist(bins=256)
+        </div>
+        <div class="summary-item">
+          <div class="tag">실습 응용</div>
+          면적(w×h) 기준 필터링 → 상위 객체 바운딩 박스 시각화
+        </div>
+        <div class="summary-item">
+          <div class="tag">전체 흐름</div>
+          JSON 파싱 → 카테고리 필터 → 좌표 추출 → 시각화
+        </div>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<footer>
+  2026-05-07 수업 내용 기반 복습 노트 &nbsp;|&nbsp; matplotlib_study1~4.py &amp; matplotlib_test.py
+</footer>
+
+</body>
+</html>

@@ -1,7 +1,7 @@
-# 새폴더 만들기 - matplotlib
+# 새폴더 만들기 - matplotlib_study
 # 새파일 - matplotlib_study1.py
 
-# matplotlib : 그래프와 이미지를 눈으로 볼 수 있게 해주는 시각화
+# matplotlib_study : 그래프와 이미지를 눈으로 볼 수 있게 해주는 시각화
 #              라이브러리이다.
 
 import numpy as np
