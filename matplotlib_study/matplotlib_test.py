@@ -57,6 +57,7 @@ for ann in data['frames']['annotations']:
     elif max2 > area > max3:
         max3 = area
 
+# 조건문 순서 변경
 for ann_ in data['frames']['annotations']:
     area_ = ann_['label']['width'] * ann_['label']['height']
     if area_ == max:
