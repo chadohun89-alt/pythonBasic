@@ -1,0 +1,1133 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OpenCV 통합 정리</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Segoe UI', 'Malgun Gothic', sans-serif;
+      background: #ffffff;
+      color: #1a202c;
+      padding: 40px 20px;
+      line-height: 1.7;
+    }
+    h1 {
+      text-align: center;
+      font-size: 2rem;
+      color: #2563eb;
+      margin-bottom: 8px;
+    }
+    .subtitle {
+      text-align: center;
+      color: #64748b;
+      margin-bottom: 30px;
+      font-size: 0.9rem;
+    }
+
+    /* 탭 */
+    .tab-bar {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      margin-bottom: 40px;
+    }
+    .tab-btn {
+      padding: 12px 36px;
+      font-size: 1rem;
+      font-weight: bold;
+      font-family: 'Segoe UI', 'Malgun Gothic', sans-serif;
+      border: 2px solid #cbd5e1;
+      border-radius: 12px;
+      background: #ffffff;
+      color: #64748b;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .tab-btn.active {
+      background: #2563eb;
+      border-color: #2563eb;
+      color: #ffffff;
+      box-shadow: 0 2px 10px rgba(37,99,235,0.25);
+    }
+    .tab-btn:not(.active):hover {
+      border-color: #2563eb;
+      color: #2563eb;
+      background: #eff6ff;
+    }
+
+    /* 목차 */
+    .toc {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 55px;
+    }
+    .toc-item {
+      background: #ffffff;
+      border: 2px solid #cbd5e1;
+      border-radius: 12px;
+      padding: 12px 20px;
+      text-align: center;
+      font-size: 0.85rem;
+      color: #2563eb;
+      font-weight: bold;
+      min-width: 130px;
+      text-decoration: none;
+      display: inline-block;
+      transition: background 0.15s, border-color 0.15s, box-shadow 0.15s;
+    }
+    .toc-item:hover {
+      background: #dbeafe;
+      border-color: #1d4ed8;
+      box-shadow: 0 2px 8px rgba(37,99,235,0.15);
+    }
+    .arrow { font-size: 1.4rem; color: #94a3b8; }
+
+    /* 섹션 */
+    .section {
+      max-width: 900px;
+      margin: 0 auto 50px auto;
+    }
+    .section-title {
+      font-size: 1.3rem;
+      font-weight: bold;
+      color: #2563eb;
+      border-left: 4px solid #2563eb;
+      padding-left: 12px;
+      margin-bottom: 20px;
+    }
+
+    /* 카드 */
+    .card {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 14px;
+      padding: 24px;
+      margin-bottom: 20px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+    }
+    .card h3 {
+      font-size: 1.05rem;
+      color: #b45309;
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+    }
+
+    /* 묶음 카드 */
+    .group-card {
+      background: #fffbeb;
+      border: 2px solid #fcd34d;
+      border-radius: 14px;
+      padding: 24px;
+      margin-bottom: 20px;
+    }
+    .group-card > h3 {
+      font-size: 1.1rem;
+      color: #92400e;
+      margin-bottom: 18px;
+      display: flex;
+      align-items: center;
+    }
+    .sub-card {
+      background: #ffffff;
+      border: 1px solid #fde68a;
+      border-radius: 10px;
+      padding: 18px 20px;
+      margin-bottom: 14px;
+    }
+    .sub-card:last-child { margin-bottom: 0; }
+    .sub-card h4 {
+      font-size: 0.97rem;
+      color: #92400e;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+    }
+
+    /* 새 내용 표시용 묶음 카드 (파란 테마) */
+    .group-card-new {
+      background: #eff6ff;
+      border: 2px solid #93c5fd;
+      border-radius: 14px;
+      padding: 24px;
+      margin-bottom: 20px;
+    }
+    .group-card-new > h3 {
+      font-size: 1.1rem;
+      color: #1e40af;
+      margin-bottom: 18px;
+      display: flex;
+      align-items: center;
+    }
+    .sub-card-new {
+      background: #ffffff;
+      border: 1px solid #bfdbfe;
+      border-radius: 10px;
+      padding: 18px 20px;
+      margin-bottom: 14px;
+    }
+    .sub-card-new:last-child { margin-bottom: 0; }
+    .sub-card-new h4 {
+      font-size: 0.97rem;
+      color: #1e40af;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+    }
+
+    /* 배지 */
+    .step-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: #dbeafe;
+      color: #1d4ed8;
+      border-radius: 50%;
+      width: 26px;
+      height: 26px;
+      font-size: 0.8rem;
+      font-weight: bold;
+      margin-right: 8px;
+      flex-shrink: 0;
+    }
+    .sub-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: #fef9c3;
+      color: #854d0e;
+      border-radius: 7px;
+      padding: 2px 9px;
+      font-size: 0.78rem;
+      font-weight: bold;
+      margin-right: 8px;
+      flex-shrink: 0;
+      white-space: nowrap;
+    }
+    .sub-badge-new {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: #dbeafe;
+      color: #1e40af;
+      border-radius: 7px;
+      padding: 2px 9px;
+      font-size: 0.78rem;
+      font-weight: bold;
+      margin-right: 8px;
+      flex-shrink: 0;
+      white-space: nowrap;
+    }
+    .new-tag {
+      display: inline-block;
+      background: #2563eb;
+      color: #fff;
+      border-radius: 6px;
+      padding: 1px 7px;
+      font-size: 0.72rem;
+      font-weight: bold;
+      margin-left: 8px;
+      vertical-align: middle;
+    }
+
+    /* 코드 블록 */
+    .code-block {
+      background: #f1f5f9;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 14px 18px;
+      font-family: 'Consolas', 'D2Coding', monospace;
+      font-size: 0.88rem;
+      color: #065f46;
+      overflow-x: auto;
+      margin-bottom: 14px;
+      white-space: pre;
+    }
+
+    /* 파라미터 테이블 */
+    .param-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+    }
+    .param-table th {
+      background: #eff6ff;
+      color: #1d4ed8;
+      padding: 9px 14px;
+      text-align: left;
+      font-weight: 600;
+    }
+    .param-table td {
+      padding: 9px 14px;
+      border-bottom: 1px solid #e2e8f0;
+      vertical-align: top;
+    }
+    .param-table tr:last-child td { border-bottom: none; }
+    .param-table tr:hover td { background: #f8fafc; }
+    .param-name {
+      color: #b45309;
+      font-family: 'Consolas', monospace;
+      font-size: 0.85rem;
+      white-space: nowrap;
+    }
+    .param-type {
+      color: #059669;
+      font-family: 'Consolas', monospace;
+      font-size: 0.82rem;
+    }
+    .tag {
+      display: inline-block;
+      background: #e2e8f0;
+      color: #475569;
+      border-radius: 6px;
+      padding: 2px 8px;
+      font-size: 0.75rem;
+      margin-left: 6px;
+      vertical-align: middle;
+    }
+    .tag.optional { background: #d1fae5; color: #059669; }
+
+    /* 팁 박스 */
+    .tip-box {
+      background: #f0fdf4;
+      border: 1px solid #86efac;
+      border-radius: 10px;
+      padding: 14px 18px;
+      color: #166534;
+      font-size: 0.85rem;
+      margin-top: 14px;
+    }
+    .tip-box strong { color: #15803d; }
+
+    .triangle-wrap {
+      width: 100%;
+      overflow: visible;
+      margin-bottom: 8px;
+    }
+
+    code {
+      font-family: 'Consolas', 'D2Coding', monospace;
+      background: #f1f5f9;
+      padding: 1px 5px;
+      border-radius: 4px;
+      font-size: 0.88em;
+    }
+
+    .page { display: none; }
+    .page.active { display: block; }
+  </style>
+</head>
+<body>
+
+<h1>OpenCV 통합 정리</h1>
+<p class="subtitle">5월 12일 + 5월 13일 · 이미지 / 영상 처리 전체 함수 정리</p>
+
+<div class="tab-bar">
+  <button class="tab-btn active" id="btn-img" onclick="showPage('img')">이미지</button>
+  <button class="tab-btn" id="btn-vid" onclick="showPage('vid')">영상</button>
+</div>
+
+
+<!-- ===================== 이미지 탭 ===================== -->
+<div id="page-img" class="page active">
+
+  <div class="toc">
+    <a href="#img-read" class="toc-item">① 파일 읽기<br/><span style="font-weight:normal;color:#64748b;font-size:0.75rem">cv2.imread()</span></a>
+    <div class="arrow">→</div>
+    <a href="#img-process" class="toc-item">② 가공<br/><span style="font-weight:normal;color:#64748b;font-size:0.75rem">흐름도 + 함수 목록</span></a>
+    <div class="arrow">→</div>
+    <a href="#img-show" class="toc-item">③ 보여주기<br/><span style="font-weight:normal;color:#64748b;font-size:0.75rem">cv2.imshow()</span></a>
+    <div class="arrow">→</div>
+    <a href="#img-save" class="toc-item">④ 저장<br/><span style="font-weight:normal;color:#64748b;font-size:0.75rem">cv2.imwrite()</span></a>
+  </div>
+
+  <!-- 흐름도 -->
+  <div class="section">
+    <div class="card">
+      <h3><span class="step-badge">▲</span>이미지 처리 흐름</h3>
+      <div class="triangle-wrap">
+        <svg viewBox="-280 -40 1240 700" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;overflow:visible;">
+          <polygon points="400,95 130,510 670,510" fill="#f0f9ff" stroke="#3b82f6" stroke-width="2.5"/>
+          <circle cx="400" cy="95"  r="7" fill="#3b82f6"/>
+          <circle cx="130" cy="510" r="7" fill="#ca8a04"/>
+          <circle cx="670" cy="510" r="7" fill="#059669"/>
+          <circle cx="400" cy="372" r="6" fill="#db2777"/>
+          <line x1="400" y1="95"  x2="400" y2="40"  stroke="#3b82f6" stroke-width="1.5" stroke-dasharray="5,3"/>
+          <line x1="130" y1="510" x2="50"  y2="470" stroke="#ca8a04" stroke-width="1.5" stroke-dasharray="5,3"/>
+          <line x1="670" y1="510" x2="740" y2="470" stroke="#059669" stroke-width="1.5" stroke-dasharray="5,3"/>
+          <!-- 꼭짓점: 크기변환 -->
+          <rect x="300" y="-35" width="200" height="60" rx="10" fill="#dbeafe" stroke="#3b82f6" stroke-width="1.5"/>
+          <text x="400" y="-10" text-anchor="middle" font-family="'Malgun Gothic',sans-serif" font-size="15" font-weight="bold" fill="#1e40af">크기변환</text>
+          <text x="400" y="13"  text-anchor="middle" font-family="Consolas,monospace" font-size="12" fill="#1e40af">cv2.resize()</text>
+          <!-- 가운데: 반전 -->
+          <rect x="310" y="347" width="180" height="52" rx="10" fill="#fce7f3" stroke="#db2777" stroke-width="1.5"/>
+          <text x="400" y="371" text-anchor="middle" font-family="'Malgun Gothic',sans-serif" font-size="15" font-weight="bold" fill="#9d174d">반전</text>
+          <text x="400" y="391" text-anchor="middle" font-family="Consolas,monospace" font-size="12" fill="#9d174d">cv2.flip()</text>
+          <!-- 좌측: 색상 처리 -->
+          <rect x="-272" y="325" width="317" height="245" rx="10" fill="#fef9c3" stroke="#ca8a04" stroke-width="1.5"/>
+          <text x="-113" y="347" text-anchor="middle" font-family="'Malgun Gothic',sans-serif" font-size="14" font-weight="bold" fill="#854d0e">색상 처리</text>
+          <line x1="-158" y1="356" x2="-158" y2="563" stroke="#fcd34d" stroke-width="1"/>
+          <line x1="-46"  y1="356" x2="-46"  y2="563" stroke="#fcd34d" stroke-width="1"/>
+          <!-- 열1: 흑백변환 -->
+          <rect x="-268" y="390" width="105" height="72" rx="6" fill="#fff7ed" stroke="#fb923c" stroke-width="1"/>
+          <text x="-215" y="412" text-anchor="middle" font-family="'Malgun Gothic',sans-serif" font-size="11" font-weight="bold" fill="#9a3412">흑백변환</text>
+          <text x="-215" y="430" text-anchor="middle" font-family="Consolas,monospace" font-size="9.5" fill="#9a3412">cvtColor()</text>
+          <!-- 열2: 경계1 -->
+          <rect x="-152" y="358" width="101" height="65" rx="6" fill="#eff6ff" stroke="#3b82f6" stroke-width="1"/>
+          <text x="-101" y="378" text-anchor="middle" font-family="'Malgun Gothic',sans-serif" font-size="11" font-weight="bold" fill="#1e40af">경계1</text>
+          <text x="-101" y="396" text-anchor="middle" font-family="Consolas,monospace" font-size="9.5" fill="#1e40af">threshold()</text>
+          <!-- 열2: 경계2 -->
+          <rect x="-152" y="432" width="101" height="65" rx="6" fill="#eff6ff" stroke="#3b82f6" stroke-width="1"/>
+          <text x="-101" y="452" text-anchor="middle" font-family="'Malgun Gothic',sans-serif" font-size="11" font-weight="bold" fill="#1e40af">경계2</text>
+          <text x="-101" y="470" text-anchor="middle" font-family="Consolas,monospace" font-size="9.5" fill="#1e40af">Canny()</text>
+          <!-- 열3: 윤곽선 -->
+          <rect x="-40" y="358" width="82" height="100" rx="6" fill="#f0fdf4" stroke="#16a34a" stroke-width="1"/>
+          <text x="-1" y="378" text-anchor="middle" font-family="'Malgun Gothic',sans-serif" font-size="11" font-weight="bold" fill="#166534">윤곽선</text>
+          <text x="-1" y="396" text-anchor="middle" font-family="Consolas,monospace" font-size="8.5" fill="#166534">findContours()</text>
+          <text x="-1" y="411" text-anchor="middle" font-family="Consolas,monospace" font-size="8.5" fill="#166534">drawContours()</text>
+          <text x="-1" y="426" text-anchor="middle" font-family="Consolas,monospace" font-size="8.5" fill="#166534">contourArea()</text>
+          <!-- 열3: 바운딩박스 -->
+          <rect x="-40" y="468" width="82" height="93" rx="6" fill="#fdf2f8" stroke="#db2777" stroke-width="1"/>
+          <text x="-1" y="483" text-anchor="middle" font-family="'Malgun Gothic',sans-serif" font-size="10" font-weight="bold" fill="#9d174d">바운딩박스</text>
+          <text x="-1" y="497" text-anchor="middle" font-family="Consolas,monospace" font-size="8.5" fill="#9d174d">boundingRect()</text>
+          <text x="-1" y="511" text-anchor="middle" font-family="Consolas,monospace" font-size="8.5" fill="#9d174d">rectangle()</text>
+          <text x="-1" y="525" text-anchor="middle" font-family="Consolas,monospace" font-size="8.5" fill="#9d174d">putText()</text>
+          <!-- 우측: 노이즈 제거 -->
+          <rect x="740" y="410" width="210" height="112" rx="10" fill="#d1fae5" stroke="#059669" stroke-width="1.5"/>
+          <text x="845" y="430" text-anchor="middle" font-family="'Malgun Gothic',sans-serif" font-size="14" font-weight="bold" fill="#065f46">노이즈 제거</text>
+          <rect x="745" y="438" width="96" height="76" rx="6" fill="#bbf7d0" stroke="#16a34a" stroke-width="1"/>
+          <text x="793" y="454" text-anchor="middle" font-family="'Malgun Gothic',sans-serif" font-size="11" font-weight="bold" fill="#166534">기본</text>
+          <text x="793" y="470" text-anchor="middle" font-family="Consolas,monospace" font-size="9.5" fill="#166534">GaussianBlur()</text>
+          <text x="793" y="486" text-anchor="middle" font-family="Consolas,monospace" font-size="9.5" fill="#166534">morphologyEx()</text>
+          <rect x="847" y="438" width="98" height="76" rx="6" fill="#bfdbfe" stroke="#3b82f6" stroke-width="1"/>
+          <text x="896" y="454" text-anchor="middle" font-family="'Malgun Gothic',sans-serif" font-size="11" font-weight="bold" fill="#1e40af">모션</text>
+          <text x="896" y="470" text-anchor="middle" font-family="Consolas,monospace" font-size="9.5" fill="#1e40af">absdiff()</text>
+          <text x="896" y="486" text-anchor="middle" font-family="Consolas,monospace" font-size="9.5" fill="#1e40af">MOG2()</text>
+        </svg>
+      </div>
+    </div>
+  </div>
+
+  <!-- ① 파일 읽기 -->
+  <div class="section" id="img-read">
+    <div class="section-title">① 파일 읽기</div>
+    <div class="card">
+      <h3><span class="step-badge">1</span>이미지 읽기 → cv2.imread()</h3>
+      <div class="code-block">img = cv2.imread("opencv_study/images/coin.png")</div>
+      <table class="param-table">
+        <tr><th>인수</th><th>타입</th><th>설명</th></tr>
+        <tr>
+          <td class="param-name">filename</td>
+          <td class="param-type">str</td>
+          <td>읽어올 이미지 파일 경로</td>
+        </tr>
+        <tr>
+          <td class="param-name">flags <span class="tag optional">선택</span></td>
+          <td class="param-type">int</td>
+          <td>
+            <code>cv2.IMREAD_COLOR</code> → 기본값, BGR 3채널<br/>
+            <code>cv2.IMREAD_GRAYSCALE</code> → 흑백 1채널<br/>
+            <code>cv2.IMREAD_UNCHANGED</code> → 알파 포함 4채널
+          </td>
+        </tr>
+      </table>
+      <div class="tip-box">
+        <strong>반환값</strong> → NumPy 배열 (shape: 세로 × 가로 × 채널)<br/>
+        OpenCV는 <strong>BGR</strong> 순서 사용 (일반 RGB와 반대)
+      </div>
+    </div>
+  </div>
+
+  <!-- ② 가공 -->
+  <div class="section" id="img-process">
+    <div class="section-title">② 가공</div>
+
+    <div class="card">
+      <h3><span class="step-badge">1</span>크기변환 → cv2.resize()</h3>
+      <div class="code-block">small = cv2.resize(img, (540, 960))</div>
+      <table class="param-table">
+        <tr><th>인수</th><th>설명</th></tr>
+        <tr><td class="param-name">src</td><td>원본 이미지 배열</td></tr>
+        <tr><td class="param-name">dsize</td><td><code>(가로, 세로)</code> 픽셀 튜플 → shape와 반대 순서 주의!</td></tr>
+        <tr><td class="param-name">fx, fy <span class="tag optional">선택</span></td><td>배율로 지정할 때 사용. 0.5 = 절반</td></tr>
+      </table>
+    </div>
+
+    <div class="card">
+      <h3><span class="step-badge">2</span>반전 → cv2.flip()</h3>
+      <div class="code-block">flip = cv2.flip(img, 1)</div>
+      <table class="param-table">
+        <tr><th>인수</th><th>설명</th></tr>
+        <tr><td class="param-name">src</td><td>원본 이미지 배열</td></tr>
+        <tr>
+          <td class="param-name">flipCode</td>
+          <td>
+            <code>1</code> → 좌우 반전 (수직 축 기준)<br/>
+            <code>0</code> → 상하 반전 (수평 축 기준)<br/>
+            <code>-1</code> → 상하좌우 동시 반전
+          </td>
+        </tr>
+      </table>
+    </div>
+
+    <div class="group-card">
+      <h3><span class="step-badge" style="background:#fde68a;color:#92400e;">3</span>색상 처리</h3>
+
+      <div class="sub-card">
+        <h4><span class="sub-badge">3-1</span>흑백변환 → cv2.cvtColor()</h4>
+        <div class="code-block">gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)</div>
+        <table class="param-table">
+          <tr><th>인수</th><th>설명</th></tr>
+          <tr><td class="param-name">src</td><td>원본 이미지</td></tr>
+          <tr>
+            <td class="param-name">code</td>
+            <td>
+              <code>COLOR_BGR2GRAY</code> → 컬러→흑백<br/>
+              <code>COLOR_BGR2RGB</code> → BGR→RGB<br/>
+              <code>COLOR_BGR2HSV</code> → BGR→HSV
+            </td>
+          </tr>
+        </table>
+        <div class="tip-box">흑백으로 바꾸면 shape가 <code>(h, w)</code>로 줄어든다 (채널 없어짐)</div>
+      </div>
+
+      <div class="sub-card">
+        <h4><span class="sub-badge">3-2</span>경계1 → cv2.threshold()</h4>
+        <div class="code-block">_, thresh = cv2.threshold(blur, 131, 255, cv2.THRESH_BINARY_INV)</div>
+        <table class="param-table">
+          <tr><th>인수</th><th>설명</th></tr>
+          <tr><td class="param-name">src</td><td>흑백(1채널) 이미지</td></tr>
+          <tr><td class="param-name">thresh</td><td>기준 밝기값 (0~255)</td></tr>
+          <tr><td class="param-name">maxval</td><td>기준 초과 픽셀에 넣을 값 (보통 255)</td></tr>
+          <tr>
+            <td class="param-name">type</td>
+            <td>
+              <code>THRESH_BINARY</code> → 기준 초과 → maxval, 이하 → 0<br/>
+              <code>THRESH_BINARY_INV</code> → 반전. 배경이 밝고 대상이 어두울 때 사용
+            </td>
+          </tr>
+        </table>
+        <div class="tip-box"><strong>반환값 2개</strong> → <code>(실제 사용된 threshold 값, 결과 이미지)</code>. 첫 번째는 보통 <code>_</code>로 무시</div>
+      </div>
+
+      <div class="sub-card">
+        <h4><span class="sub-badge">3-3</span>경계2 → cv2.Canny()</h4>
+        <div class="code-block">edge = cv2.Canny(blur, 50, 150)</div>
+        <table class="param-table">
+          <tr><th>인수</th><th>설명</th></tr>
+          <tr><td class="param-name">image</td><td>흑백 이미지 (GaussianBlur 적용 후 권장)</td></tr>
+          <tr><td class="param-name">threshold1</td><td>낮은 기준값 → 이 이하는 edge 제외</td></tr>
+          <tr><td class="param-name">threshold2</td><td>높은 기준값 → 이 이상은 확실한 edge</td></tr>
+        </table>
+        <div class="tip-box">기준값을 낮추면 edge 많이 검출, 높이면 뚜렷한 경계만 남는다</div>
+      </div>
+
+      <div class="sub-card">
+        <h4><span class="sub-badge">3-4</span>윤곽선 → findContours / drawContours / contourArea</h4>
+        <div style="margin-bottom:14px;">
+          <div style="font-size:0.88rem;font-weight:bold;color:#374151;margin-bottom:8px;">① cv2.findContours()</div>
+          <div class="code-block">contours, hier = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)</div>
+          <table class="param-table">
+            <tr><th>인수</th><th>설명</th></tr>
+            <tr><td class="param-name">image</td><td>이진화 또는 Canny 처리된 이미지</td></tr>
+            <tr>
+              <td class="param-name">mode</td>
+              <td>
+                <code>RETR_EXTERNAL</code> → 가장 바깥쪽 윤곽선만<br/>
+                <code>RETR_LIST</code> → 모든 contour<br/>
+                <code>RETR_TREE</code> → 모든 contour + 계층관계 저장
+              </td>
+            </tr>
+            <tr>
+              <td class="param-name">method</td>
+              <td>
+                <code>CHAIN_APPROX_SIMPLE</code> → 필요한 좌표만 저장 (효율적)<br/>
+                <code>CHAIN_APPROX_NONE</code> → 모든 픽셀 좌표 저장
+              </td>
+            </tr>
+          </table>
+        </div>
+        <div style="margin-bottom:14px;">
+          <div style="font-size:0.88rem;font-weight:bold;color:#374151;margin-bottom:8px;">② cv2.drawContours()</div>
+          <div class="code-block">cv2.drawContours(result, contours, -1, (0, 0, 255), 2)</div>
+          <table class="param-table">
+            <tr><th>인수</th><th>설명</th></tr>
+            <tr><td class="param-name">image</td><td>그릴 대상 이미지 (원본 copy 권장)</td></tr>
+            <tr><td class="param-name">contours</td><td>findContours로 얻은 윤곽선 리스트</td></tr>
+            <tr><td class="param-name">contourIdx</td><td>그릴 contour 인덱스. <code>-1</code>이면 전체</td></tr>
+            <tr><td class="param-name">color</td><td>BGR 색상 튜플</td></tr>
+            <tr><td class="param-name">thickness</td><td>선 두께(px). <code>-1</code>이면 내부 채우기</td></tr>
+          </table>
+        </div>
+        <div>
+          <div style="font-size:0.88rem;font-weight:bold;color:#374151;margin-bottom:8px;">③ cv2.contourArea()</div>
+          <div class="code-block">area = cv2.contourArea(cnt)
+if area &lt; 2500: continue  # 작은 것 제외</div>
+          <div class="tip-box">반환값: 해당 contour의 픽셀 면적 (float). 노이즈나 작은 객체 필터링에 활용</div>
+        </div>
+      </div>
+
+      <div class="sub-card">
+        <h4><span class="sub-badge">3-5</span>바운딩박스 + 그리기 + 텍스트<span class="new-tag">+NEW</span></h4>
+        <div style="margin-bottom:14px;">
+          <div style="font-size:0.88rem;font-weight:bold;color:#374151;margin-bottom:8px;">① cv2.boundingRect()</div>
+          <div class="code-block">x, y, w, h = cv2.boundingRect(cnt)</div>
+          <div class="tip-box">반환값: <code>(x, y, w, h)</code> — x,y = 좌상단 좌표 / w,h = 너비, 높이</div>
+        </div>
+        <div style="margin-bottom:14px;">
+          <div style="font-size:0.88rem;font-weight:bold;color:#374151;margin-bottom:8px;">② cv2.rectangle()</div>
+          <div class="code-block">cv2.rectangle(result, (x, y), (x+w, y+h), (0, 0, 255), 2)</div>
+          <table class="param-table">
+            <tr><th>인수</th><th>설명</th></tr>
+            <tr><td class="param-name">img</td><td>그릴 이미지</td></tr>
+            <tr><td class="param-name">pt1</td><td>사각형 좌상단 좌표 <code>(x, y)</code></td></tr>
+            <tr><td class="param-name">pt2</td><td>사각형 우하단 좌표 <code>(x+w, y+h)</code></td></tr>
+            <tr><td class="param-name">color</td><td>BGR 색상</td></tr>
+            <tr><td class="param-name">thickness</td><td>선 두께. <code>-1</code>이면 내부 채우기</td></tr>
+          </table>
+        </div>
+        <div>
+          <div style="font-size:0.88rem;font-weight:bold;color:#374151;margin-bottom:8px;">③ cv2.putText()</div>
+          <div class="code-block">cv2.putText(result, "label", (x, y-10), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)</div>
+          <table class="param-table">
+            <tr><th>인수</th><th>설명</th></tr>
+            <tr><td class="param-name">img</td><td>텍스트를 그릴 이미지</td></tr>
+            <tr><td class="param-name">text</td><td>출력할 문자열 (한글 불가 → 영문 사용)</td></tr>
+            <tr><td class="param-name">org</td><td>텍스트 왼쪽 <strong>하단</strong> 기준점 <code>(x, y)</code>. 박스 위에 띄우려면 <code>(x, y-10)</code></td></tr>
+            <tr><td class="param-name">fontFace</td><td><code>FONT_HERSHEY_SIMPLEX</code> 가장 많이 씀</td></tr>
+            <tr><td class="param-name">fontScale</td><td>글자 크기 배율. 0.5~1.0 적당</td></tr>
+            <tr><td class="param-name">color</td><td>BGR 색상</td></tr>
+            <tr><td class="param-name">thickness</td><td>글자 선 두께(px)</td></tr>
+          </table>
+          <div class="tip-box">OpenCV는 한글 폰트를 기본 지원하지 않아 영문·숫자만 출력 가능</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3><span class="step-badge">4</span>노이즈 제거 → cv2.GaussianBlur()</h3>
+      <div class="code-block">blur = cv2.GaussianBlur(gray, (5, 5), 0)</div>
+      <table class="param-table">
+        <tr><th>인수</th><th>설명</th></tr>
+        <tr><td class="param-name">src</td><td>원본 이미지</td></tr>
+        <tr><td class="param-name">ksize</td><td>커널 크기 <code>(가로, 세로)</code> → 반드시 홀수. 클수록 더 흐릿</td></tr>
+        <tr><td class="param-name">sigmaX</td><td>가우시안 표준편차. <code>0</code>이면 ksize로 자동 계산</td></tr>
+      </table>
+      <div class="tip-box">경계 검출 전 먼저 적용하면 노이즈가 줄어 더 깔끔한 결과</div>
+    </div>
+  </div>
+
+  <!-- ③ 보여주기 -->
+  <div class="section" id="img-show">
+    <div class="section-title">③ 보여주기</div>
+    <div class="card">
+      <h3><span class="step-badge">3</span>화면 출력 → cv2.imshow()</h3>
+      <div class="code-block">cv2.imshow("contour", result)
+cv2.waitKey(0)           # 키 입력까지 무한 대기
+cv2.destroyAllWindows()</div>
+      <table class="param-table">
+        <tr><th>함수</th><th>설명</th></tr>
+        <tr>
+          <td class="param-name">imshow(winname, mat)</td>
+          <td>창을 열어 이미지를 보여준다. winname이 같으면 같은 창에 표시</td>
+        </tr>
+        <tr>
+          <td class="param-name">waitKey(delay)</td>
+          <td><code>0</code>이면 키 입력까지 무한 대기. 이미지 출력 시 사용</td>
+        </tr>
+        <tr>
+          <td class="param-name">destroyAllWindows()</td>
+          <td>열린 모든 창 닫기</td>
+        </tr>
+      </table>
+      <div class="tip-box"><code>imshow()</code> 후 반드시 <code>waitKey()</code>를 호출해야 창이 실제로 그려진다</div>
+    </div>
+  </div>
+
+  <!-- ④ 저장 -->
+  <div class="section" id="img-save">
+    <div class="section-title">④ 저장</div>
+    <div class="card">
+      <h3><span class="step-badge">4</span>이미지 저장 → cv2.imwrite()</h3>
+      <div class="code-block">cv2.imwrite("opencv_study/images/result.png", thresh)</div>
+      <table class="param-table">
+        <tr><th>인수</th><th>타입</th><th>설명</th></tr>
+        <tr>
+          <td class="param-name">filename</td>
+          <td class="param-type">str</td>
+          <td>저장할 파일 경로. 확장자로 포맷 결정 (.png / .jpg 등)</td>
+        </tr>
+        <tr>
+          <td class="param-name">img</td>
+          <td class="param-type">ndarray</td>
+          <td>저장할 이미지 배열</td>
+        </tr>
+        <tr>
+          <td class="param-name">params <span class="tag optional">선택</span></td>
+          <td class="param-type">list</td>
+          <td>품질 옵션 등 추가 파라미터 (보통 생략)</td>
+        </tr>
+      </table>
+      <div class="tip-box"><strong>반환값</strong> → 성공 시 <code>True</code>, 실패 시 <code>False</code></div>
+    </div>
+  </div>
+
+</div><!-- /page-img -->
+
+
+<!-- ===================== 영상 탭 ===================== -->
+<div id="page-vid" class="page">
+
+  <div class="toc">
+    <a href="#vid-read" class="toc-item">① 파일 읽기<br/><span style="font-weight:normal;color:#64748b;font-size:0.75rem">cv2.VideoCapture()</span></a>
+    <div class="arrow">→</div>
+    <a href="#vid-process" class="toc-item">② 가공<br/><span style="font-weight:normal;color:#64748b;font-size:0.75rem">흐름도 + 함수 목록</span></a>
+    <div class="arrow">→</div>
+    <a href="#vid-show" class="toc-item">③ 보여주기<br/><span style="font-weight:normal;color:#64748b;font-size:0.75rem">while + imshow()</span></a>
+    <div class="arrow">→</div>
+    <a href="#vid-save" class="toc-item">④ 저장<br/><span style="font-weight:normal;color:#64748b;font-size:0.75rem">프레임 imwrite()</span></a>
+  </div>
+
+  <!-- 흐름도 (이미지 탭과 동일) -->
+  <div class="section">
+    <div class="card">
+      <h3><span class="step-badge">▲</span>이미지 처리 흐름</h3>
+      <div class="triangle-wrap">
+        <svg viewBox="-280 -40 1240 700" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;overflow:visible;">
+          <polygon points="400,95 130,510 670,510" fill="#f0f9ff" stroke="#3b82f6" stroke-width="2.5"/>
+          <circle cx="400" cy="95"  r="7" fill="#3b82f6"/>
+          <circle cx="130" cy="510" r="7" fill="#ca8a04"/>
+          <circle cx="670" cy="510" r="7" fill="#059669"/>
+          <circle cx="400" cy="372" r="6" fill="#db2777"/>
+          <line x1="400" y1="95"  x2="400" y2="40"  stroke="#3b82f6" stroke-width="1.5" stroke-dasharray="5,3"/>
+          <line x1="130" y1="510" x2="50"  y2="470" stroke="#ca8a04" stroke-width="1.5" stroke-dasharray="5,3"/>
+          <line x1="670" y1="510" x2="740" y2="470" stroke="#059669" stroke-width="1.5" stroke-dasharray="5,3"/>
+          <rect x="300" y="-35" width="200" height="60" rx="10" fill="#dbeafe" stroke="#3b82f6" stroke-width="1.5"/>
+          <text x="400" y="-10" text-anchor="middle" font-family="'Malgun Gothic',sans-serif" font-size="15" font-weight="bold" fill="#1e40af">크기변환</text>
+          <text x="400" y="13"  text-anchor="middle" font-family="Consolas,monospace" font-size="12" fill="#1e40af">cv2.resize()</text>
+          <rect x="310" y="347" width="180" height="52" rx="10" fill="#fce7f3" stroke="#db2777" stroke-width="1.5"/>
+          <text x="400" y="371" text-anchor="middle" font-family="'Malgun Gothic',sans-serif" font-size="15" font-weight="bold" fill="#9d174d">반전</text>
+          <text x="400" y="391" text-anchor="middle" font-family="Consolas,monospace" font-size="12" fill="#9d174d">cv2.flip()</text>
+          <rect x="-272" y="325" width="317" height="245" rx="10" fill="#fef9c3" stroke="#ca8a04" stroke-width="1.5"/>
+          <text x="-113" y="347" text-anchor="middle" font-family="'Malgun Gothic',sans-serif" font-size="14" font-weight="bold" fill="#854d0e">색상 처리</text>
+          <line x1="-158" y1="356" x2="-158" y2="563" stroke="#fcd34d" stroke-width="1"/>
+          <line x1="-46"  y1="356" x2="-46"  y2="563" stroke="#fcd34d" stroke-width="1"/>
+          <rect x="-268" y="390" width="105" height="72" rx="6" fill="#fff7ed" stroke="#fb923c" stroke-width="1"/>
+          <text x="-215" y="412" text-anchor="middle" font-family="'Malgun Gothic',sans-serif" font-size="11" font-weight="bold" fill="#9a3412">흑백변환</text>
+          <text x="-215" y="430" text-anchor="middle" font-family="Consolas,monospace" font-size="9.5" fill="#9a3412">cvtColor()</text>
+          <rect x="-152" y="358" width="101" height="65" rx="6" fill="#eff6ff" stroke="#3b82f6" stroke-width="1"/>
+          <text x="-101" y="378" text-anchor="middle" font-family="'Malgun Gothic',sans-serif" font-size="11" font-weight="bold" fill="#1e40af">경계1</text>
+          <text x="-101" y="396" text-anchor="middle" font-family="Consolas,monospace" font-size="9.5" fill="#1e40af">threshold()</text>
+          <rect x="-152" y="432" width="101" height="65" rx="6" fill="#eff6ff" stroke="#3b82f6" stroke-width="1"/>
+          <text x="-101" y="452" text-anchor="middle" font-family="'Malgun Gothic',sans-serif" font-size="11" font-weight="bold" fill="#1e40af">경계2</text>
+          <text x="-101" y="470" text-anchor="middle" font-family="Consolas,monospace" font-size="9.5" fill="#1e40af">Canny()</text>
+          <rect x="-40" y="358" width="82" height="100" rx="6" fill="#f0fdf4" stroke="#16a34a" stroke-width="1"/>
+          <text x="-1" y="378" text-anchor="middle" font-family="'Malgun Gothic',sans-serif" font-size="11" font-weight="bold" fill="#166534">윤곽선</text>
+          <text x="-1" y="396" text-anchor="middle" font-family="Consolas,monospace" font-size="8.5" fill="#166534">findContours()</text>
+          <text x="-1" y="411" text-anchor="middle" font-family="Consolas,monospace" font-size="8.5" fill="#166534">drawContours()</text>
+          <text x="-1" y="426" text-anchor="middle" font-family="Consolas,monospace" font-size="8.5" fill="#166534">contourArea()</text>
+          <rect x="-40" y="468" width="82" height="93" rx="6" fill="#fdf2f8" stroke="#db2777" stroke-width="1"/>
+          <text x="-1" y="483" text-anchor="middle" font-family="'Malgun Gothic',sans-serif" font-size="10" font-weight="bold" fill="#9d174d">바운딩박스</text>
+          <text x="-1" y="497" text-anchor="middle" font-family="Consolas,monospace" font-size="8.5" fill="#9d174d">boundingRect()</text>
+          <text x="-1" y="511" text-anchor="middle" font-family="Consolas,monospace" font-size="8.5" fill="#9d174d">rectangle()</text>
+          <text x="-1" y="525" text-anchor="middle" font-family="Consolas,monospace" font-size="8.5" fill="#9d174d">putText()</text>
+          <rect x="740" y="410" width="210" height="112" rx="10" fill="#d1fae5" stroke="#059669" stroke-width="1.5"/>
+          <text x="845" y="430" text-anchor="middle" font-family="'Malgun Gothic',sans-serif" font-size="14" font-weight="bold" fill="#065f46">노이즈 제거</text>
+          <rect x="745" y="438" width="96" height="76" rx="6" fill="#bbf7d0" stroke="#16a34a" stroke-width="1"/>
+          <text x="793" y="454" text-anchor="middle" font-family="'Malgun Gothic',sans-serif" font-size="11" font-weight="bold" fill="#166534">기본</text>
+          <text x="793" y="470" text-anchor="middle" font-family="Consolas,monospace" font-size="9.5" fill="#166534">GaussianBlur()</text>
+          <text x="793" y="486" text-anchor="middle" font-family="Consolas,monospace" font-size="9.5" fill="#166534">morphologyEx()</text>
+          <rect x="847" y="438" width="98" height="76" rx="6" fill="#bfdbfe" stroke="#3b82f6" stroke-width="1"/>
+          <text x="896" y="454" text-anchor="middle" font-family="'Malgun Gothic',sans-serif" font-size="11" font-weight="bold" fill="#1e40af">모션</text>
+          <text x="896" y="470" text-anchor="middle" font-family="Consolas,monospace" font-size="9.5" fill="#1e40af">absdiff()</text>
+          <text x="896" y="486" text-anchor="middle" font-family="Consolas,monospace" font-size="9.5" fill="#1e40af">MOG2()</text>
+        </svg>
+      </div>
+    </div>
+  </div>
+
+  <!-- ① 파일 읽기 -->
+  <div class="section" id="vid-read">
+    <div class="section-title">① 파일 읽기</div>
+    <div class="card">
+      <h3><span class="step-badge">1</span>영상 읽기 → cv2.VideoCapture()</h3>
+      <div class="code-block">cap = cv2.VideoCapture("opencv_study/videos/video.mp4")</div>
+      <table class="param-table">
+        <tr><th>인수</th><th>타입</th><th>설명</th></tr>
+        <tr>
+          <td class="param-name">filename</td>
+          <td class="param-type">str / int</td>
+          <td>영상 파일 경로 또는 카메라 인덱스 (0 = 웹캠)</td>
+        </tr>
+      </table>
+      <div class="tip-box">
+        <strong>주요 메서드</strong><br/>
+        <code>cap.read()</code> → 현재 위치 프레임 읽기 → <code>(ret, frame)</code> 반환 후 다음으로 자동 이동<br/>
+        <code>cap.get(propId)</code> → 속성 읽기<br/>
+        <code>cap.set(propId, value)</code> → 속성 설정. <code>CAP_PROP_POS_FRAMES</code>로 재생 위치 이동<br/>
+        <code>cap.release()</code> → 영상 파일 닫기 (메모리 해제)
+      </div>
+      <div class="code-block">width  = cap.get(cv2.CAP_PROP_FRAME_WIDTH)
+height = cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
+fps    = cap.get(cv2.CAP_PROP_FPS)
+total  = cap.get(cv2.CAP_PROP_FRAME_COUNT)</div>
+      <table class="param-table">
+        <tr><th>cap.get() / cap.set() 주요 속성</th><th>의미</th></tr>
+        <tr><td class="param-name">CAP_PROP_POS_FRAMES</td><td>현재 위치 (프레임 번호)</td></tr>
+        <tr><td class="param-name">CAP_PROP_POS_MSEC</td><td>현재 위치 (밀리초)</td></tr>
+        <tr><td class="param-name">CAP_PROP_FPS</td><td>초당 프레임 수</td></tr>
+        <tr><td class="param-name">CAP_PROP_FRAME_WIDTH</td><td>영상 너비</td></tr>
+        <tr><td class="param-name">CAP_PROP_FRAME_HEIGHT</td><td>영상 높이</td></tr>
+        <tr><td class="param-name">CAP_PROP_FRAME_COUNT</td><td>전체 프레임 수</td></tr>
+      </table>
+    </div>
+
+    <div class="card">
+      <h3><span class="step-badge">2</span>FPS 기반 딜레이 계산<span class="new-tag">NEW</span></h3>
+      <div class="code-block">fps   = cap.get(cv2.CAP_PROP_FPS)
+delay = int(1000 / fps)   # waitKey에 넣을 딜레이(ms)</div>
+      <div class="tip-box">
+        <code>waitKey(30)</code>은 고정값(약 33fps)이라 원본 FPS와 맞지 않을 수 있다<br/>
+        <code>int(1000 / fps)</code>로 계산하면 영상 고유 FPS에 맞게 재생된다<br/>
+        예: 30fps → 33ms / 60fps → 16ms / 24fps → 41ms<br/>
+        <code>waitKey(delay * 2)</code>처럼 배수를 주면 영상을 느리게 재생할 수 있다
+      </div>
+    </div>
+  </div>
+
+  <!-- ② 가공 -->
+  <div class="section" id="vid-process">
+    <div class="section-title">② 가공</div>
+
+    <div class="card">
+      <h3><span class="step-badge">1</span>크기변환 → cv2.resize()</h3>
+      <div class="code-block">small = cv2.resize(frame, (640, 480))</div>
+      <table class="param-table">
+        <tr><th>인수</th><th>설명</th></tr>
+        <tr><td class="param-name">src</td><td>원본 프레임 배열</td></tr>
+        <tr><td class="param-name">dsize</td><td><code>(가로, 세로)</code> 픽셀 튜플 → shape와 반대 순서 주의!</td></tr>
+        <tr><td class="param-name">fx, fy <span class="tag optional">선택</span></td><td>배율로 지정할 때 사용. 0.5 = 절반</td></tr>
+      </table>
+    </div>
+
+    <div class="card">
+      <h3><span class="step-badge">2</span>반전 → cv2.flip()</h3>
+      <div class="code-block">flip = cv2.flip(frame, 1)</div>
+      <table class="param-table">
+        <tr><th>인수</th><th>설명</th></tr>
+        <tr><td class="param-name">src</td><td>원본 프레임 배열</td></tr>
+        <tr>
+          <td class="param-name">flipCode</td>
+          <td>
+            <code>1</code> → 좌우 반전 / <code>0</code> → 상하 반전 / <code>-1</code> → 상하좌우 동시
+          </td>
+        </tr>
+      </table>
+    </div>
+
+    <div class="group-card">
+      <h3><span class="step-badge" style="background:#fde68a;color:#92400e;">3</span>색상 처리</h3>
+      <div class="sub-card">
+        <h4><span class="sub-badge">3-1</span>흑백변환 → cv2.cvtColor()</h4>
+        <div class="code-block">gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)</div>
+        <div class="tip-box">흑백으로 바꾸면 shape가 <code>(h, w)</code>로 줄어든다 (채널 없어짐)</div>
+      </div>
+      <div class="sub-card">
+        <h4><span class="sub-badge">3-2</span>경계1 → cv2.threshold()</h4>
+        <div class="code-block">_, thresh = cv2.threshold(blur, 100, 255, cv2.THRESH_BINARY)</div>
+        <div class="tip-box"><strong>반환값 2개</strong> → <code>(실제 사용된 threshold 값, 결과 이미지)</code>. 첫 번째는 보통 <code>_</code>로 무시</div>
+      </div>
+      <div class="sub-card">
+        <h4><span class="sub-badge">3-3</span>경계2 → cv2.Canny()</h4>
+        <div class="code-block">edge = cv2.Canny(blur, 50, 150)</div>
+        <div class="tip-box">기준값을 낮추면 edge 많이 검출, 높이면 뚜렷한 경계만 남는다</div>
+      </div>
+      <div class="sub-card">
+        <h4><span class="sub-badge">3-4</span>윤곽선 → findContours / drawContours / contourArea</h4>
+        <div class="code-block">contours, _ = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+cv2.drawContours(result, contours, -1, (0, 0, 255), 2)
+area = cv2.contourArea(cnt)</div>
+        <div class="tip-box">이진화 또는 Canny 처리 후 사용. contourArea로 작은 노이즈 컨투어 필터링 가능</div>
+      </div>
+      <div class="sub-card">
+        <h4><span class="sub-badge">3-5</span>바운딩박스 + 그리기 + 텍스트<span class="new-tag">+NEW</span></h4>
+        <div class="code-block">result = frame.copy()
+x, y, w, h = cv2.boundingRect(cnt)
+cv2.rectangle(result, (x, y), (x+w, y+h), (0, 0, 255), 2)
+cv2.putText(result, "motion", (x, y-10), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)</div>
+        <div class="tip-box">
+          원본 frame을 직접 수정하지 않도록 <code>frame.copy()</code>로 복사본에 그린다<br/>
+          <code>putText</code>의 org는 텍스트 왼쪽 <strong>하단</strong> 기준 → <code>(x, y-10)</code>으로 박스 위에 표시
+        </div>
+      </div>
+    </div>
+
+    <div class="group-card">
+      <h3><span class="step-badge" style="background:#fde68a;color:#92400e;">4</span>노이즈 제거<span class="new-tag">+NEW</span></h3>
+
+      <div class="sub-card">
+        <h4><span class="sub-badge">4-1</span>기본 → cv2.GaussianBlur()</h4>
+        <div class="code-block">blur = cv2.GaussianBlur(gray, (5, 5), 0)</div>
+        <table class="param-table">
+          <tr><th>인수</th><th>설명</th></tr>
+          <tr><td class="param-name">src</td><td>원본 이미지</td></tr>
+          <tr><td class="param-name">ksize</td><td>커널 크기 <code>(가로, 세로)</code> → 반드시 홀수. 클수록 더 흐릿</td></tr>
+          <tr><td class="param-name">sigmaX</td><td>가우시안 표준편차. <code>0</code>이면 ksize로 자동 계산</td></tr>
+        </table>
+        <div class="tip-box">경계 검출 또는 absdiff 전에 먼저 적용하면 노이즈가 줄어 더 깔끔한 결과</div>
+      </div>
+
+      <div class="sub-card-new">
+        <h4><span class="sub-badge-new">4-2</span>모션 감지<span class="new-tag">NEW</span></h4>
+        <p style="font-size:0.85rem;color:#475569;margin-bottom:10px;font-weight:bold;">① 이전 프레임 저장 패턴</p>
+        <div class="code-block">pre_frame = None   # 루프 밖에서 초기화
+
+while True:
+    ret, frame = cap.read()
+    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+
+    if pre_frame is None:        # 첫 프레임은 저장만
+        pre_frame = gray
+        continue
+
+    diff = cv2.absdiff(pre_frame, gray)
+
+    pre_frame = gray             # 루프 끝에서 현재 → 이전으로 갱신</div>
+        <div class="tip-box">
+          <code>pre_frame</code>은 루프 <strong>밖</strong>에서 None으로 초기화<br/>
+          루프 <strong>끝</strong>에서 현재 프레임으로 갱신해야 연속 비교가 된다<br/>
+          첫 프레임은 비교 대상이 없으므로 <code>continue</code>로 건너뛴다
+        </div>
+        <p style="font-size:0.85rem;color:#475569;margin:14px 0 10px;font-weight:bold;">② 프레임 차이 절대값 → cv2.absdiff()</p>
+        <div class="code-block">diff = cv2.absdiff(pre_frame, gray)</div>
+        <table class="param-table">
+          <tr><th>인수</th><th>타입</th><th>설명</th></tr>
+          <tr>
+            <td class="param-name">src1</td>
+            <td class="param-type">ndarray</td>
+            <td>이전 프레임 (그레이스케일 권장)</td>
+          </tr>
+          <tr>
+            <td class="param-name">src2</td>
+            <td class="param-type">ndarray</td>
+            <td>현재 프레임 (같은 크기·타입)</td>
+          </tr>
+        </table>
+        <div class="tip-box">
+          반환값: 두 이미지의 픽셀 차이 절대값<br/>
+          움직인 부분 → 밝은 값, 변화 없는 배경 → 0(검정)<br/>
+          이후 <code>threshold()</code>로 이진화하면 움직임 마스크가 된다
+        </div>
+        <p style="font-size:0.85rem;color:#475569;margin:14px 0 10px;font-weight:bold;">③ 영역 팽창 → cv2.dilate()</p>
+        <div class="code-block">thresh = cv2.dilate(thresh, None, iterations=2)</div>
+        <table class="param-table">
+          <tr><th>인수</th><th>설명</th></tr>
+          <tr><td class="param-name">src</td><td>팽창할 이진 이미지</td></tr>
+          <tr><td class="param-name">kernel</td><td><code>None</code>이면 3×3 사각형 커널 자동 사용</td></tr>
+          <tr><td class="param-name">iterations <span class="tag optional">선택</span></td><td>팽창 반복 횟수. 클수록 영역이 더 넓어진다</td></tr>
+        </table>
+        <div class="tip-box">
+          흩어진 흰색 픽셀을 부풀려 인접 영역을 <strong>하나로 합쳐준다</strong><br/>
+          찢어진 윤곽선을 연결해 contour 탐지가 더 잘 된다
+        </div>
+      </div>
+
+      <div class="sub-card-new">
+        <h4><span class="sub-badge-new">4-3</span>모폴로지 연산<span class="new-tag">NEW</span></h4>
+        <p style="font-size:0.85rem;color:#475569;margin-bottom:10px;font-weight:bold;">① 커널 생성 → np.ones()</p>
+        <div class="code-block">import numpy as np
+kernel = np.ones((5, 5), np.uint8)</div>
+        <table class="param-table">
+          <tr><th>인수</th><th>설명</th></tr>
+          <tr><td class="param-name">shape</td><td>커널 크기 <code>(행, 열)</code>. 홀수 권장 (3×3, 5×5). 클수록 효과 강함</td></tr>
+          <tr><td class="param-name">dtype</td><td><code>np.uint8</code> 고정</td></tr>
+        </table>
+        <p style="font-size:0.85rem;color:#475569;margin:14px 0 10px;font-weight:bold;">② 노이즈 제거 → cv2.MORPH_OPEN</p>
+        <div class="code-block">opened = cv2.morphologyEx(thresh, cv2.MORPH_OPEN, kernel, iterations=1)</div>
+        <div class="tip-box">
+          <strong>OPEN = 침식(Erosion) → 팽창(Dilation)</strong><br/>
+          작은 노이즈 점을 먼저 깎아내고 다시 복원 → 작은 노이즈 제거, 큰 영역은 유지
+        </div>
+        <p style="font-size:0.85rem;color:#475569;margin:14px 0 10px;font-weight:bold;">③ 끊어진 영역 연결 → cv2.MORPH_CLOSE</p>
+        <div class="code-block">linked = cv2.morphologyEx(opened, cv2.MORPH_CLOSE, kernel, iterations=10)</div>
+        <div class="tip-box">
+          <strong>CLOSE = 팽창(Dilation) → 침식(Erosion)</strong><br/>
+          먼저 부풀려 인접 영역을 붙인 뒤 다시 깎아 복원 → 끊긴 윤곽 연결, 구멍 메우기<br/>
+          <strong>권장 순서:</strong> threshold → MORPH_OPEN → MORPH_CLOSE → dilate → findContours
+        </div>
+        <p style="font-size:0.85rem;color:#475569;margin:14px 0 10px;font-weight:bold;">④ cv2.morphologyEx() 공통 파라미터</p>
+        <table class="param-table">
+          <tr><th>인수</th><th>타입</th><th>설명</th></tr>
+          <tr>
+            <td class="param-name">src</td>
+            <td class="param-type">ndarray</td>
+            <td>이진 이미지 (threshold 결과)</td>
+          </tr>
+          <tr>
+            <td class="param-name">op</td>
+            <td class="param-type">int</td>
+            <td>
+              <code>MORPH_OPEN</code> → 노이즈 제거<br/>
+              <code>MORPH_CLOSE</code> → 끊긴 영역 연결<br/>
+              <code>MORPH_ERODE</code> → 침식만 / <code>MORPH_DILATE</code> → 팽창만
+            </td>
+          </tr>
+          <tr>
+            <td class="param-name">kernel</td>
+            <td class="param-type">ndarray</td>
+            <td><code>np.ones()</code>로 생성한 커널</td>
+          </tr>
+          <tr>
+            <td class="param-name">iterations <span class="tag optional">선택</span></td>
+            <td class="param-type">int</td>
+            <td>연산 반복 횟수. 클수록 효과 강함 (기본값 1)</td>
+          </tr>
+        </table>
+      </div>
+
+      <div class="sub-card-new">
+        <h4><span class="sub-badge-new">4-4</span>배경 제거기 (MOG2)<span class="new-tag">NEW</span></h4>
+        <p style="font-size:0.85rem;color:#475569;margin-bottom:10px;font-weight:bold;">① 생성 → cv2.createBackgroundSubtractorMOG2()</p>
+        <div class="code-block">bgdelete = cv2.createBackgroundSubtractorMOG2(
+    history=300,
+    varThreshold=40,
+    detectShadows=True
+)</div>
+        <table class="param-table">
+          <tr><th>인수</th><th>설명</th></tr>
+          <tr>
+            <td class="param-name">history <span class="tag optional">선택</span></td>
+            <td>배경 학습에 사용할 과거 프레임 수. 클수록 배경을 천천히 갱신 (기본 500)</td>
+          </tr>
+          <tr>
+            <td class="param-name">varThreshold <span class="tag optional">선택</span></td>
+            <td>변화 판단 임계값. 클수록 덜 민감 → 작은 움직임 무시 (기본 16)</td>
+          </tr>
+          <tr>
+            <td class="param-name">detectShadows <span class="tag optional">선택</span></td>
+            <td><code>True</code>이면 그림자를 회색(127)으로 표시. <code>False</code>이면 흰색(255)으로</td>
+          </tr>
+        </table>
+        <div class="tip-box">루프 <strong>밖</strong>에서 한 번만 생성하고, 루프 안에서 <code>.apply()</code>를 프레임마다 호출한다</div>
+        <p style="font-size:0.85rem;color:#475569;margin:14px 0 10px;font-weight:bold;">② 마스크 추출 → bgdelete.apply()</p>
+        <div class="code-block">fmask = bgdelete.apply(frame, learningRate=0.005)
+
+# 그림자(127)를 배경으로 처리 → 전경(255)만 남기기
+_, thresh = cv2.threshold(fmask, 200, 255, cv2.THRESH_BINARY)</div>
+        <table class="param-table">
+          <tr><th>인수</th><th>설명</th></tr>
+          <tr><td class="param-name">image</td><td>현재 프레임 (BGR 컬러 그대로 입력 가능)</td></tr>
+          <tr>
+            <td class="param-name">learningRate <span class="tag optional">선택</span></td>
+            <td>
+              배경 갱신 속도 (0.0~1.0)<br/>
+              <code>-1</code> → 자동 / <code>0</code> → 배경 고정 / <code>0.005</code> → 천천히 갱신
+            </td>
+          </tr>
+        </table>
+        <div class="tip-box">
+          <strong>반환값 fmask 픽셀 의미</strong><br/>
+          전경(움직임) = 255 / 배경 = 0 / 그림자(detectShadows=True) = 127<br/>
+          <code>threshold(fmask, 200, ...)</code>로 그림자를 배경으로 처리해 전경만 남긴다
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ③ 보여주기 -->
+  <div class="section" id="vid-show">
+    <div class="section-title">③ 보여주기</div>
+    <div class="card">
+      <h3><span class="step-badge">3</span>영상 재생 루프 → while + cv2.imshow()</h3>
+      <div class="code-block">while True:
+    ret, frame = cap.read()
+    if not ret:
+        break
+
+    small = cv2.resize(frame, (640, 480))
+    gray  = cv2.cvtColor(small, cv2.COLOR_BGR2GRAY)
+
+    cv2.imshow("color", small)
+    cv2.imshow("gray",  gray)
+
+    if cv2.waitKey(delay) == 27:   # ESC 키 코드
+        break
+
+cap.release()
+cv2.destroyAllWindows()</div>
+      <table class="param-table">
+        <tr><th>함수</th><th>설명</th></tr>
+        <tr>
+          <td class="param-name">imshow(winname, mat)</td>
+          <td>창을 열어 현재 프레임을 보여준다</td>
+        </tr>
+        <tr>
+          <td class="param-name">waitKey(delay)</td>
+          <td>delay ms 대기 → 반환값으로 키 입력 판별. <code>27</code>이면 ESC</td>
+        </tr>
+        <tr>
+          <td class="param-name">cap.release()</td>
+          <td>루프 종료 후 영상 파일 닫기 (메모리 해제)</td>
+        </tr>
+      </table>
+      <div class="tip-box">
+        이미지 출력 시 → <code>waitKey(0)</code> (키 입력까지 무한 대기)<br/>
+        영상 재생 시 → <code>waitKey(delay)</code> (FPS에 맞춘 딜레이)
+      </div>
+    </div>
+  </div>
+
+  <!-- ④ 저장 -->
+  <div class="section" id="vid-save">
+    <div class="section-title">④ 저장</div>
+    <div class="card">
+      <h3><span class="step-badge">4</span>특정 프레임 저장 → cap.set() + cv2.imwrite()</h3>
+      <div class="code-block"># 5초 지점 프레임으로 이동 후 저장
+fps = cap.get(cv2.CAP_PROP_FPS)
+target_frame = int(fps * 5)
+cap.set(cv2.CAP_PROP_POS_FRAMES, target_frame)
+
+ret, frame = cap.read()
+cv2.imwrite("opencv_study/images/frame_5s.png", frame)</div>
+      <table class="param-table">
+        <tr><th>인수</th><th>타입</th><th>설명</th></tr>
+        <tr>
+          <td class="param-name">filename</td>
+          <td class="param-type">str</td>
+          <td>저장할 파일 경로. 확장자로 포맷 결정 (.png / .jpg 등)</td>
+        </tr>
+        <tr>
+          <td class="param-name">img</td>
+          <td class="param-type">ndarray</td>
+          <td>저장할 프레임 배열 (<code>cap.read()</code>로 읽은 frame)</td>
+        </tr>
+      </table>
+      <div class="tip-box">
+        <strong>반환값</strong> → 성공 시 <code>True</code>, 실패 시 <code>False</code><br/>
+        <code>cap.set()</code>으로 원하는 위치로 이동 → <code>cap.read()</code>로 해당 프레임 읽기 → <code>imwrite()</code>로 저장
+      </div>
+    </div>
+  </div>
+
+</div><!-- /page-vid -->
+
+<script>
+  function showPage(page) {
+    document.getElementById('page-img').classList.remove('active');
+    document.getElementById('page-vid').classList.remove('active');
+    document.getElementById('btn-img').classList.remove('active');
+    document.getElementById('btn-vid').classList.remove('active');
+    document.getElementById('page-' + page).classList.add('active');
+    document.getElementById('btn-' + page).classList.add('active');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+</script>
+
+</body>
+</html>
