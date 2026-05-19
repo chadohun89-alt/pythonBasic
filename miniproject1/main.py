@@ -5,9 +5,12 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from database.db import Base, engine
-from models import student
-from schemas import student_schema
-from routers import student_router
+
+# 모델과 스키마가 main에 왜 필요하지?
+from models import student, score, attendance
+from schemas import student_schema, score_schema, attendance_schema
+
+from routers import student_router, score_router, attendance_router
 
 app = FastAPI()
 Base.metadata.create_all(bind=engine)
@@ -21,3 +24,5 @@ app.add_middleware(
 )
 
 app.include_router(student_router.router)
+app.include_router(score_router.router)
+app.include_router(attendance_router.router)
