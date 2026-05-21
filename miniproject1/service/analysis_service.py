@@ -1,10 +1,358 @@
 # analysis_service.py
+import io
+
+import pandas as pd
+import matplotlib 
+matplotlib.use("Agg")
+import matplotlib.pyplot as plt
+
 
 from fastapi import HTTPException
+from fastapi.responses import StreamingResponse
+
+import numpy as np
 
 from models.student import Student
 from models.attendance import Attendance
 from models.score import Score
+
+import os
+from reportlab.platypus import (SimpleDocTemplate, Paragraph,
+                                Spacer, Image, PageBreak)
+from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.lib.pagesizes import A4
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.cidfonts import UnicodeCIDFont
+
+from fastapi.responses import FileResponse
+
+
+
+# 분석결과 리포트 생성 -pdf
+def create_report_service(db):
+    
+
+    report_path="student_analysis_report.pdf"
+    score_graph_path = "score_graph.png"
+    attend_graph_path = "attend_graph.png"
+
+    pdfmetrics.registerFont( UnicodeCIDFont("HYSMyeongJo-Medium"))
+    doc = SimpleDocTemplate( report_path ,pagesize= A4)
+    style = getSampleStyleSheet()
+
+    style["Title"].fontName = "HYSMyeongJo-Medium"
+    style["Heading1"].fontName = "HYSMyeongJo-Medium"
+    style["Heading2"].fontName = "HYSMyeongJo-Medium"
+    style["BodyText"].fontName = "HYSMyeongJo-Medium"
+    
+    story=[]
+    title=Paragraph("학생 학습 분석 리포트", style["Title"])
+    story.append(title)
+    story.append(Spacer(1,20))
+
+    summary_data = get_class_summary(db)
+    story.append(Paragraph("1. 반 전체 통계 ", style["Heading1"]))
+    story.append(Spacer(1,10))
+    story.append( 
+        Paragraph(
+            f"전체 학생수 : {summary_data['total_student']}",
+            style["BodyText"]
+        ))
+    story.append( 
+        Paragraph(
+            f"반 평균점수 : {summary_data['avg_score']}",
+            style["BodyText"]
+        ))
+    story.append( 
+        Paragraph(
+            f"평균 출석률 : {summary_data['avg_attend_rate']}%",
+            style["BodyText"]
+        ))
+
+    student_stat = get_student_status_service(db)
+    story.append(Spacer(1,10))
+
+
+    story.append(Paragraph("2. 관리 학생", style["Heading1"]))
+    story.append(Spacer(1,10))
+    
+    for std in student_stat["danger_std"]:
+        text = (f"{std['name']} /"
+                f"평균 점수 :{std['avg_score']} /"
+                f"출석률 : {std['attend_rate']}"  )
+        story.append(Paragraph(text, style["BodyText"]))
+
+    story.append(Spacer(1,10))
+
+    story.append(Paragraph("3. 우수 학생", style["Heading1"]))
+    story.append(Spacer(1,10))
+    
+    for std in student_stat["excellent_std"]:
+        text = (f"{std['name']} /"
+                f"평균 점수 :{std['avg_score']} /"
+                f"출석률 : {std['attend_rate']}"  )
+        story.append(Paragraph(text, style["BodyText"]))
+
+    story.append(PageBreak())
+    story.append(Paragraph("4. 성적 그래프", style["Heading1"]))
+
+    story.append(Spacer(1,10))
+
+    create_score_graph_image(db, score_graph_path)
+    create_attend_graph_image(db, attend_graph_path)
+
+    graph_summary= get_graph_summary_service(db)
+    story.append(Image(score_graph_path, width=400, height=250))
+    story.append(Spacer(1,10)) # Spacer_pdf 줄바꿈 및 여백 ( 몇줄, 아래쪽 여백 얼마(pt))
+    story.append(
+        Paragraph(
+            f"평균 : {graph_summary['avg_score']} / "
+            f"최고 : {graph_summary['max_score']} / "
+            f"최저 : {graph_summary['min_score']} / "
+            f"표준편차 : {graph_summary['std_score']}"
+        , style["BodyText"]) 
+    )
+
+    story.append(Spacer(1,10))
+    story.append(Paragraph("5. 출석률 그래프", style["Heading1"]))
+    story.append(Spacer(1,10))
+
+    story.append(Image(attend_graph_path, width=400, height=250))
+    story.append(Spacer(1,10)) # Spacer_pdf 줄바꿈 및 여백 ( 몇줄, 아래쪽 여백 얼마(pt))
+    story.append(
+        Paragraph(
+            f"평균 : {graph_summary['avg_attend_rate']} / "
+            f"최고 : {graph_summary['max_rate']} / "
+            f"최저 : {graph_summary['min_rate']} / "
+            f"표준편차 : {graph_summary['std_rate']}"
+        , style["BodyText"]) 
+    )
+
+    doc.build(story)
+
+    return FileResponse(
+        path=report_path,
+        filename="학생_학습_분석_리포트.pdf",
+        media_type="application/pdf"
+    )
+
+# 성적, 출석률 요약
+def get_graph_summary_service(db):
+    scores=db.query(Score).all()
+    attends = db.query(Attendance).all()
+
+    avg_scores=[]
+    attend_rates=[]
+
+    for score in scores:
+        avg = ( # 학생 한명의 평균값
+            score.python_score + score.numpy_score +
+            score.pandas_score + score.java_score +
+            score.project_score
+        )/5
+        avg_scores.append(avg)
+
+    for attend in attends:
+        tot_cnt = ( # 학생의 출석률
+            attend.attend + attend.late + attend.absent +
+            attend.early_leave
+        )
+
+        if tot_cnt == 0:
+            continue
+        rate = ( attend.attend / tot_cnt) * 100 # 학생의 출석률
+        attend_rates.append(rate)
+
+    return{
+        "avg_score": round(np.mean(avg_scores),2),
+        "max_score": np.max(avg_scores),
+        "min_score": np.min(avg_scores),
+        "std_score": round(np.std(avg_scores),2),
+        "avg_attend_rate":round(np.mean(attend_rates),2),
+        "max_rate":round(np.max(attend_rates),2),
+        "min_rate":round(np.min(attend_rates),2),
+        "std_rate":round(np.std(attend_rates),2),
+
+    }
+
+def create_attend_graph_image(db, path):
+    fig = attend_graph_make(db)
+    fig.savefig(path, format="png", dpi=150, bbox_inches="tight")
+    plt.close(fig)
+
+def create_score_graph_image(db,path):
+    fig = score_graph_make(db)
+    fig.savefig(path, format="png", dpi=150, bbox_inches="tight")
+    plt.close(fig)
+    
+
+def score_graph_make(db):
+    
+    matplotlib.rc("font",family="Malgun Gothic")
+
+    scores = db.query(Score).all()
+
+    avg_scores = []
+    for score in scores:
+        avg = ( # 학생 한명의 평균값
+            score.python_score + score.numpy_score +
+            score.pandas_score + score.java_score +
+            score.project_score
+        )/5
+        avg_scores.append(avg)
+    df = pd.DataFrame({
+            "avg_score" : avg_scores
+        })
+    bins = [0, 50, 60, 70, 80, 90, 101]
+    labels = ["0~50점", "50~60점", "60~70점", "70~80점",
+                "80~90점", "90~100점"]
+
+    df["score_range"] = pd.cut(
+        df["avg_score"],
+        bins=bins,
+        labels=labels,
+        include_lowest=True,
+        right=False
+    )
+
+    score_counts = df["score_range"].value_counts().sort_index() # 정렬 먼저 해야 하는 거 아닌가?
+
+    plt.rcParams["axes.unicode_minus"] = False # 음수표현
+
+
+    fig, ax = plt.subplots( figsize=(8,5) )
+
+    bars = ax.bar(
+        score_counts.index.astype(str),
+        score_counts.values,
+        width=0.5
+    )
+    ax.set_title("성적 분포 그래프", fontsize=16,
+                fontweight="bold", pad=20)
+    ax.set_ylabel("학생 수(명)", rotation=0, labelpad=40, fontsize=11)
+    ax.grid(axis="y",alpha=0.25)
+
+    ax.spines["top"].set_visible(False)
+    ax.spines["right"].set_visible(False)
+
+    for bar in bars:
+        height = bar.get_height()
+        ax.text(
+            bar.get_x() + bar.get_width()/2,
+            height + 0.1,
+            int(height),
+            ha="center",
+            fontsize=11
+        )
+
+    fig.tight_layout()
+    return fig
+
+def attend_graph_make(db):
+    matplotlib.rc("font",family="Malgun Gothic")
+
+    attends = db.query(Attendance).all()
+
+    attend_rates = []
+    for attend in attends:
+        tot_cnt = ( # 학생의 출석률
+            attend.attend + attend.late + attend.absent +
+            attend.early_leave
+        )
+        if tot_cnt == 0:
+            continue
+        rate = ( attend.attend / tot_cnt) * 100 # 학생의 출석률
+        attend_rates.append(rate)
+    df = pd.DataFrame({
+        "attend_rate":attend_rates
+
+    })
+    bins=[0,50,70,90,101]
+    labels=["50%미만", "50%~69%", "70%~89%", "90%이상"]
+
+    df["attend_range"] = pd.cut(
+        df["attend_rate"],
+        bins=bins,
+        labels=labels,
+        include_lowest=True,
+        right=False
+    )
+
+    attend_counts= df["attend_range"].value_counts().sort_index()
+
+    colors = [
+        "#47C83E",
+        "#368AFF",
+        "#FFCD12",
+        "#FF5A5A"
+    ]
+
+    legend_labels=[]
+    for label, value in zip(labels, attend_counts.values):
+        legend_labels.append(f"{label} ({value}명)")
+
+    fig, ax = plt.subplots( figsize=(8,5) )
+
+    wedges, texts, autotexts = ax.pie(
+        attend_counts.values,
+        labels=None,
+        autopct="%1.1f%%",
+        startangle=90,
+        colors=colors,
+        wedgeprops={"width":0.42, "edgecolor":"white"},
+        pctdistance=0.75,
+        textprops={
+            "color":"white",
+            "fontsize":11,
+            "fontweight":"bold"
+        }
+    )
+
+    ax.text(
+        0,0,
+        f"전체\n{len(attends)}명",
+        ha="center",
+        va="center",
+        fontsize=16, fontweight="bold", color="#000000"
+
+    )
+
+    ax.set_title("출석률 분포", fontsize=16, fontweight="bold", pad=20)
+
+    ax.legend(
+        wedges[::-1], legend_labels[::-1], loc="center left",
+        bbox_to_anchor=(1.05,0.5),
+        frameon=False,
+        fontsize=11,
+        labelspacing=1.5
+
+    )
+    # bbox_to_anchor=(x,y)
+    # 범례좌표 - x=0(그래프 왼쪽), x=1(그래프 오른쪽)
+    #           y=0(그래프 아래), y=1(그래프 위)
+    fig.tight_layout()
+    return fig
+
+# 출석률 그래프
+def get_attend_graph_service(db):
+    fig = attend_graph_make(db)
+    img = io.BytesIO()
+    fig.savefig(img, format="png", dpi=150,bbox_inches="tight")
+    img.seek(0)
+    plt.close(fig)
+    return StreamingResponse( img, media_type="image/png")
+
+
+
+# 성적 그래프
+def get_score_graph_service(db):
+    fig = score_graph_make(db)
+    img = io.BytesIO()
+    fig.savefig(img,format="png", dpi=150, bbox_inches="tight")
+
+    img.seek(0)
+    plt.close(fig)
+    return StreamingResponse( img, media_type="image/png")
 
 # 위험, 우수 학생
 def get_student_status_service(db):
